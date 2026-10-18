@@ -7,6 +7,6 @@
 
    Bleiben die Werte leer, läuft SmartSlot ohne Anmeldung, und nichts wird gespeichert. */
 window.SMARTSLOT_CONFIG = {
-  supabaseUrl: '',   // z. B. 'https://abcdefghijklmnop.supabase.co'
-  supabaseKey: ''    // «Publishable key» (sb_publishable_…) oder der ältere «anon public» Schlüssel
+  supabaseUrl: 'https://faztcphptdvrowlmywwm.supabase.co',
+  supabaseKey: 'sb_publishable_txR6Br_GygbWsZD17txzVQ_iQtdC6OC'   // «Publishable key», darf öffentlich sein
 };
