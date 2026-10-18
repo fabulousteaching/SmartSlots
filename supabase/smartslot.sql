@@ -1,4 +1,4 @@
--- SmartSlot: Tabelle und Zugriffsregeln für gespeicherte SmartSlots
+-- SmartSlots: Tabelle und Zugriffsregeln für gespeicherte SmartSlots
 -- In Supabase unter «SQL Editor» einfügen und auf «Run» klicken. Mehrmals ausführen schadet nicht.
 
 create table if not exists public.smartslots (
@@ -32,7 +32,7 @@ create policy "smartslots löschen" on public.smartslots for delete to authentic
   using ((select auth.uid()) = user_id);
 
 -- Bei jeder Änderung: Zeit festhalten; ändern sich die Daten, zählt «version» hoch.
--- So merkt SmartSlot, wenn ein anderes Fenster inzwischen gespeichert hat, und überschreibt nichts.
+-- So merkt SmartSlots, wenn ein anderes Fenster inzwischen gespeichert hat, und überschreibt nichts.
 create or replace function public.smartslots_touch() returns trigger
 language plpgsql set search_path = '' as $$
 begin

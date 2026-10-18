@@ -1,6 +1,6 @@
-# SmartSlot
+# SmartSlots
 
-**Termine effizient organisieren:** SmartSlot liest die Antworten einer Terminumfrage (CSV oder Excel, z. B. aus Nuudel, Rallly, Doodle, Framadate, Microsoft Forms oder Google Forms) und verteilt die Gespräche:
+**Termine effizient organisieren:** SmartSlots liest die Antworten einer Terminumfrage (CSV oder Excel, z. B. aus Nuudel, Rallly, Doodle, Framadate, Microsoft Forms oder Google Forms) und verteilt die Gespräche:
 
 - alle Familien bekommen einen Termin, wenn das irgendwie geht
 - an möglichst wenigen Tagen und ohne Leerzeiten
@@ -10,7 +10,7 @@
 
 Mit Konto (Supabase) werden die SmartSlots gespeichert, sodass man jederzeit weiterarbeiten kann. Ohne Konto wird nichts gespeichert.
 
-**Online:** https://fabulousteaching.github.io/SmartSlot/
+**Online:** https://fabulousteaching.github.io/SmartSlots/
 
 ## Aufbau
 

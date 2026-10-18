@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>SmartSlot – Termine effizient organisieren</title>
+<title>SmartSlots – Termine effizient organisieren</title>
 <link rel="icon" type="image/png" href="bilder/smartslot-icon.png">
 <link rel="apple-touch-icon" href="bilder/smartslot-icon-180.png">
 <meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
@@ -267,17 +267,19 @@ body.dragging,body.dragging *{cursor:grabbing !important;user-select:none}
 .add form{display:flex;gap:8px;flex:1 1 280px;min-width:0}
 .add input{flex:1;min-width:0;min-height:38px;padding:.35em .7em}
 
-.foot{padding:4px 0 40px;color:var(--ink-3);font-size:.85rem;display:flex;flex-wrap:wrap;gap:8px 18px}
+.foot{padding:4px 0 40px;color:var(--ink-3);font-size:.85rem;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px}
 
 /* ---------- Konto ---------- */
-.top{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:14px 24px}
-.topmain{flex:1 1 420px;min-width:0}
-.acct{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:.88rem;color:var(--ink-2);min-width:0}
+/* Alles mittig, Text bleibt linksbündig */
+.top{display:flex;flex-direction:column;align-items:center;gap:10px}
+.topmain{width:fit-content;max-width:100%;min-width:0}
+.acct{order:-1;align-self:stretch;display:flex;align-items:center;justify-content:flex-end;gap:10px;font-size:.88rem;color:var(--ink-2);min-width:0}
 .acct .me{display:inline-flex;align-items:center;gap:8px;min-width:0}
 .acct .av{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:.85rem;text-transform:uppercase}
 .acct .mail{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:22em}
-.loadcard{display:flex;align-items:center;gap:4px;color:var(--ink-2)}
-.authcard{max-width:460px;padding:26px}
+.loadcard{display:flex;align-items:center;gap:4px;color:var(--ink-2);max-width:460px;margin-left:auto;margin-right:auto}
+.authcard{max-width:460px;padding:26px;margin-left:auto;margin-right:auto}
+#listView{max-width:860px;margin-left:auto;margin-right:auto}
 .tabs{display:flex;padding:3px;border-radius:12px;background:var(--surface-3);gap:2px;margin-bottom:20px}
 .tabs button{flex:1;border:0;background:transparent;border-radius:9px;padding:.5em .8em;cursor:pointer;font-weight:600;font-size:.9rem;color:var(--ink-2);min-height:38px}
 .tabs button:hover{color:var(--ink)}
@@ -346,7 +348,6 @@ input[type=email]:focus,input[type=password]:focus{outline:none;border-color:var
   .grid .nm{width:8.5em}
   .kpi .val{font-size:1.45rem}
   .top{gap:6px}
-  .acct{margin-top:0;order:-1;width:100%;justify-content:flex-end}
   .acct .mail{max-width:13em}
   .authcard{padding:20px 16px}
   .slotname{font-size:1.12rem}
@@ -370,10 +371,10 @@ input[type=email]:focus,input[type=password]:focus{outline:none;border-color:var
   <div class="topmain">
     <h1 class="brand"><picture>
       <source srcset="bilder/smartslot-logo-dunkel.webp" media="(prefers-color-scheme: dark)">
-      <img src="bilder/smartslot-logo-hell.webp" alt="SmartSlot" width="760" height="168">
+      <img src="bilder/smartslot-logo-hell.webp" alt="SmartSlots" width="760" height="168">
     </picture></h1>
     <p class="tagline">Termine effizient organisieren</p>
-    <p class="lead">Antworten der Terminumfrage einlesen, und SmartSlot verteilt die Gespräche: Alle Familien bekommen einen Termin, wenn das irgendwie geht, an möglichst wenigen Tagen und ohne Leerzeiten. Wer keinen Termin bekommen kann, steht mit Grund in einer Liste.</p>
+    <p class="lead">Antworten der Terminumfrage einlesen, und SmartSlots verteilt die Gespräche: Alle Familien bekommen einen Termin, wenn das irgendwie geht, an möglichst wenigen Tagen und ohne Leerzeiten. Wer keinen Termin bekommen kann, steht mit Grund in einer Liste.</p>
   </div>
   <div class="acct" id="acct" hidden>
     <span class="me" id="acctMe"><span class="av" id="acctAv" aria-hidden="true"></span><span class="mail" id="acctMail"></span></span>
@@ -447,7 +448,7 @@ input[type=email]:focus,input[type=password]:focus{outline:none;border-color:var
     <summary>Gespräche einteilen: Schwierigkeitsgrad und gemeinsame Termine <span class="hcount" id="hardCount">optional</span></summary>
     <ul class="hhelp">
       <li><b>Auf ein anderes Gespräch ziehen:</b> Die beiden bekommen einen gemeinsamen Termin, z. B. Eltern, die getrennt geantwortet haben. Mit × wird die Gruppe wieder gelöst.</li>
-      <li><b>Antippen:</b> wechselt zwischen einfach und anspruchsvoll. Anspruchsvolle Gespräche plant SmartSlot nach Möglichkeit nicht direkt nacheinander.</li>
+      <li><b>Antippen:</b> wechselt zwischen einfach und anspruchsvoll. Anspruchsvolle Gespräche plant SmartSlots nach Möglichkeit nicht direkt nacheinander.</li>
     </ul>
     <div class="hchips" id="hardChips"></div>
     <p class="hmsg" id="hardMsg" role="status" aria-live="polite" hidden></p>
@@ -477,7 +478,7 @@ input[type=email]:focus,input[type=password]:focus{outline:none;border-color:var
 </main>
 
 <footer class="foot">
-  <span><b>SmartSlot</b> · <span id="footNote">Alles wird hier im Browser berechnet.</span></span>
+  <span><b>SmartSlots</b> · <span id="footNote">Alles wird hier im Browser berechnet.</span></span>
   <button class="linkbtn" type="button" id="resetBtn" hidden>Alles löschen</button>
 </footer>
 </div>
@@ -1462,7 +1463,7 @@ function demoData(){
 
 /* ---------- Konto: anmelden und SmartSlots speichern ----------
    Mit Supabase: Adresse und Schlüssel stehen in smartslot-config.js, Tabelle und Zugriffsregeln in supabase/smartslot.sql.
-   Fehlen die Angaben, läuft SmartSlot wie bisher ohne Anmeldung, und nichts wird gespeichert.
+   Fehlen die Angaben, läuft SmartSlots wie bisher ohne Anmeldung, und nichts wird gespeichert.
    Jeder SmartSlot ist eine Zeile der Tabelle «smartslots». Kurz nach jeder Änderung wird der ganze Zustand gespeichert.
    Die Datenbank zählt «version» bei jeder Änderung hoch. Hat inzwischen ein anderes Fenster gespeichert, wird nichts
    überschrieben, sondern nachgefragt. */
@@ -1503,7 +1504,7 @@ function txt(kind, s){ return { kind: kind, html: '<p>' + esc(s) + '</p>' }; }
 /* ---------- Anmelden, Konto erstellen, Passwort ---------- */
 var AUTH = {
   'in': { title: 'Willkommen zurück', sub: 'Melde dich an, um deine SmartSlots zu öffnen.', go: 'Anmelden' },
-  up: { title: 'Neu bei SmartSlot?', sub: 'Mit einem Konto speichert SmartSlot deine Umfragen und Verteilungen. So kannst du jederzeit weiterarbeiten.', go: 'Konto erstellen' },
+  up: { title: 'Neu bei SmartSlots?', sub: 'Mit einem Konto speichert SmartSlots deine Umfragen und Verteilungen. So kannst du jederzeit weiterarbeiten.', go: 'Konto erstellen' },
   reset: { title: 'Passwort vergessen', sub: 'Gib deine E-Mail-Adresse ein. Du bekommst einen Link, mit dem du ein neues Passwort setzen kannst.', go: 'Link senden' },
   newpw: { title: 'Neues Passwort', sub: 'Wähle ein neues Passwort für dein Konto.', go: 'Passwort speichern' }
 };
@@ -1959,7 +1960,7 @@ function initAccount(){
     history.replaceState(null, '', plainUrl());
   } else if (p.access_token){
     if (p.type === 'recovery') acct.recovery = true;
-    else if (p.type === 'signup') acct.notice = txt('ok', '✓ Deine E-Mail-Adresse ist bestätigt. Willkommen bei SmartSlot!');
+    else if (p.type === 'signup') acct.notice = txt('ok', '✓ Deine E-Mail-Adresse ist bestätigt. Willkommen bei SmartSlots!');
   }
   showView('loading');
   loadScript(SB_URL, SB_SRI, 'supabase', 'Supabase fehlt').then(function(sb){
