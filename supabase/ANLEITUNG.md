@@ -17,7 +17,9 @@ Die Menünamen in Supabase ändern sich ab und zu leicht. Die Wege unten stimmen
 2. Den ganzen Inhalt von `supabase/smartslot.sql` einfügen und **Run** klicken.
 3. Es erscheint «Success. No rows returned». Mehrmals ausführen schadet nicht.
 
-Das SQL legt die Tabelle `smartslots` an und sorgt dafür, dass jede Person nur ihre eigenen SmartSlots sieht.
+Das SQL legt die Tabellen an (`smartslots` sowie `polls` und `poll_responses` für eigene Umfragen) und sorgt dafür, dass jede Person nur ihre eigenen SmartSlots sieht. Eltern können über den Link antworten, sehen aber nur die Umfrage und ihre eigene Antwort.
+
+**Nach einem Update von SmartSlots:** Das SQL einfach nochmals ganz ausführen. Bestehende SmartSlots bleiben dabei erhalten.
 
 ## 3. Adresse der Seite eintragen
 
@@ -67,5 +69,6 @@ Vorschau-Adressen wie raw.githack.com nur zum Ausprobieren verwenden: Dort teile
 
 - **Pause bei Gratis-Projekten:** Supabase pausiert Gratis-Projekte nach etwa 7 Tagen ohne Nutzung. Die Daten bleiben erhalten. Beim Projekt in Supabase **Restore** klicken, dann geht es nach ein paar Minuten weiter. Während der Pause meldet SmartSlots «Keine Verbindung zum Server». Am besten vor den Elterngesprächen kurz prüfen. Bezahlte Projekte werden nicht pausiert.
 - **Datenschutz:** In den SmartSlots stehen Namen von Familien und ihre Antworten. Viele Schulen haben Regeln, wo solche Daten liegen dürfen. Im Zweifel bei der Schulleitung nachfragen.
-- **Ohne Konto ausprobieren** bleibt möglich. Dann wird nichts gespeichert.
+- **Eigene Umfragen** gibt es nur mit Konto. Die Eltern brauchen kein Konto: Sie öffnen den Link (`umfrage.html?t=…`), tragen ihren Namen ein und wählen bei jedem Termin Ja, Wenn nötig oder Nein. Wer den Link hat, kann antworten. Darum den Link nur den Eltern schicken und die Umfrage schliessen, wenn alle geantwortet haben.
+- **Ohne Konto ausprobieren** bleibt möglich, mit einer CSV- oder Excel-Datei. Dann wird nichts gespeichert.
 - **Abmelden** meldet nur diesen Browser ab.

@@ -292,6 +292,7 @@ body.dragging,body.dragging *{cursor:grabbing !important;user-select:none}
 .fld .linkbtn{font-weight:500;font-size:.84rem}
 input[type=email],input[type=password]{border:1px solid var(--line-2);border-radius:var(--r-sm);background:var(--surface);transition:border-color .15s, box-shadow .15s}
 input[type=email]:focus,input[type=password]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+input[type=date],input[type=time]{font:inherit}
 .btn.wide{width:100%;min-height:46px;font-size:.98rem}
 .alinks{margin:14px 0 0;text-align:center;font-size:.88rem}
 .guest{margin:18px 0 0;padding-top:16px;border-top:1px solid var(--line);font-size:.86rem;color:var(--ink-3);text-align:center}
@@ -332,6 +333,42 @@ input[type=email]:focus,input[type=password]:focus{outline:none;border-color:var
 .savetoast b{color:var(--warn)}
 .savetoast .btn{min-height:32px;font-size:.84rem}
 .signed .top .lead{display:none}
+/* ---------- Eigene Umfrage ---------- */
+.srcseg{margin:0 0 16px}
+.pollform .fld{margin:0 0 16px}
+.pollform .fld i{font-style:normal;font-weight:400;color:var(--ink-3)}
+.pollform .hint{font-weight:400}
+.pollform textarea,.pollform input[type=text]{min-height:44px;padding:.5em .8em;font-size:1rem;font-weight:400;color:var(--ink)}
+.padd{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2)}
+.padd label{display:flex;flex-direction:column;gap:4px;font-size:.84rem;font-weight:600;color:var(--ink-2)}
+.padd input{min-height:40px;padding:.3em .6em;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);font-weight:400;color:var(--ink)}
+.padd input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.padd input[type=number]{width:4.6em}
+.plen{display:inline-flex;align-items:center;gap:6px;font-weight:400}
+.padd .btn{min-height:40px}
+.pday{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 10px}
+.pday header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;align-items:baseline;margin-bottom:8px}
+.pday h3{font-size:.95rem;font-weight:650}
+.pday .pn{font-size:.82rem;color:var(--ink-3);font-weight:500}
+.ptimes{display:flex;flex-wrap:wrap;gap:6px}
+.ptime{display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:999px;padding:2px 0 2px 10px;font-size:.86rem;font-variant-numeric:tabular-nums;background:var(--surface)}
+.pempty{margin:0 0 12px;color:var(--ink-3);font-size:.9rem}
+.pbtns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.pstate{font-size:.93rem;color:var(--ink-2)}
+.pstate b{color:var(--ink)}
+.pdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--good);margin-right:7px;vertical-align:1px}
+.pstate.closed .pdot{background:var(--ink-3)}
+.pnew{color:var(--good);font-weight:600}
+.pbadge{color:var(--good);font-weight:600}
+.pbadge.closed{color:var(--ink-3)}
+.perr{color:var(--warn);font-weight:600}
+.plink{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.plink input{flex:1 1 280px;min-width:0;min-height:40px;padding:.35em .7em;font-size:.88rem;color:var(--ink-2)}
+.plink .btn{min-height:40px}
+.pcomments{margin-top:14px}
+.pcomments ul{margin:0;padding-left:1.2em;font-size:.92rem}
+.pcomments li{margin:.35em 0;overflow-wrap:anywhere}
+.grid .c.fx{outline:1px dashed var(--ink-3);outline-offset:-3px}
 .guestbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 14px;margin:18px 0 -4px;padding:10px 14px;border-radius:12px;background:var(--maybe-bg);font-size:.9rem}
 
 @media (max-width:640px){
@@ -422,6 +459,11 @@ input[type=email]:focus,input[type=password]:focus{outline:none;border-color:var
 <section class="card" id="stepLoad" aria-labelledby="hLoad">
   <div class="card-head"><span class="num" aria-hidden="true">1</span><div><h2 id="hLoad">Antworten einlesen</h2>
     <p class="sub" id="loadSub">Die Antworten der Umfrage als CSV- oder Excel-Datei herunterladen und hier hineinziehen.</p></div></div>
+  <div class="seg srcseg" id="srcSeg" hidden>
+    <button type="button" data-src="poll" aria-pressed="false">Eigene Umfrage</button>
+    <button type="button" data-src="file" aria-pressed="true">Datei einlesen</button>
+  </div>
+  <div id="srcFile">
   <div class="dropzone" id="dropZone">
     <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 17v-6M9.5 13.5 12 11l2.5 2.5"/></svg>
     <div class="dz-txt"><b>Datei hierher ziehen</b><span>CSV oder Excel (.csv, .xlsx, .xls, .ods)</span></div>
@@ -429,6 +471,38 @@ input[type=email]:focus,input[type=password]:focus{outline:none;border-color:var
     <input type="file" id="file" accept=".csv,.tsv,.txt,.xlsx,.xls,.ods,text/csv" hidden>
   </div>
   <div class="status" id="status" role="status" aria-live="polite" hidden></div>
+  </div>
+  <div id="srcPoll" hidden>
+    <div class="amsg" id="pollGuest" hidden><p>Eigene Umfragen gibt es mit einem Konto: Termine vorschlagen, den Link an die Eltern schicken, und jede Antwort erscheint hier automatisch.</p><p><button type="button" class="btn small primary" id="pollLoginBtn">Anmelden oder Konto erstellen</button></p></div>
+    <form class="pollform" id="pollForm" novalidate hidden>
+      <label class="fld"><span>Titel für die Eltern</span><input type="text" id="pTitle" maxlength="200" autocomplete="off"></label>
+      <label class="fld"><span>Nachricht an die Eltern <i>(freiwillig)</i></span><textarea id="pIntro" rows="3" maxlength="2000" placeholder="z. B. Bitte geben Sie an, welche Zeiten für Sie passen. Ein Gespräch dauert 20 Minuten."></textarea></label>
+      <div class="fld"><span>Termine</span>
+        <div class="padd">
+          <label>Datum<input type="date" id="pDate"></label>
+          <label>von<input type="time" id="pFrom" value="16:00"></label>
+          <label>bis<input type="time" id="pTo" value="18:00"></label>
+          <label>Dauer<span class="plen"><input type="number" id="pLen" value="20" min="5" max="240" step="5"> Min.</span></label>
+          <button type="button" class="btn small" id="pAdd">+ Hinzufügen</button>
+        </div>
+        <p class="hint">Datum und Zeitraum wählen: SmartSlots teilt den Zeitraum in Gespräche auf. Für weitere Tage einfach wiederholen.</p>
+      </div>
+      <div id="pList"></div>
+      <label class="check"><input type="checkbox" id="pMaybe" checked> Eltern dürfen «Wenn nötig» wählen</label>
+      <div class="amsg" id="pMsg" role="status" aria-live="polite" hidden></div>
+      <div class="pbtns"><button class="btn primary" type="submit" id="pSave">Umfrage erstellen</button><button type="button" class="btn" id="pCancel" hidden>Abbrechen</button></div>
+    </form>
+    <div id="pollView" hidden>
+      <div class="pstate" id="pvState"></div>
+      <div class="plink"><label class="sr" for="pvLink">Link für die Eltern</label><input type="text" id="pvLink" readonly>
+        <button type="button" class="btn small primary" id="pvCopy"><span>Link kopieren</span></button>
+        <a class="btn small" id="pvMail" href="#">Per E-Mail</a>
+        <a class="btn small" id="pvOpen" href="#" target="_blank" rel="noopener">Ansehen</a></div>
+      <p class="hint">Diesen Link den Eltern schicken. Jede neue Antwort erscheint hier automatisch, und die Verteilung passt sich an. Was du einstellst (Gruppen, Schwierigkeitsgrad, Stecknadeln, weggelassene Tage), bleibt dabei erhalten.</p>
+      <div class="pbtns"><button type="button" class="btn small" id="pvEdit">Umfrage bearbeiten</button><button type="button" class="btn small" id="pvToggle">Umfrage schliessen</button><button type="button" class="btn small quiet" id="pvRefresh">Aktualisieren</button></div>
+      <details class="hardbox pcomments" id="pvComments" hidden><summary>Bemerkungen der Eltern <span class="hcount" id="pvCcount"></span></summary><ul id="pvClist"></ul></details>
+    </div>
+  </div>
 </section>
 
 <section class="card" id="stepPlan" aria-labelledby="hPlan" hidden>
@@ -787,6 +861,8 @@ function useLocal(fn, source){
 function testHook(){
   window.__eg.demo = function(){ useLocal(demoData, 'Beispiel'); };
   window.__eg.rows = function(rows, name){ useLocal(function(){ return fromRows(rows); }, name || 'Tabelle'); };
+  window.__eg.pollNow = function(){ return refreshPoll(true); };
+  window.__eg.state = function(){ return state; };
 }
 
 /* ---------- Zustand ---------- */
@@ -797,9 +873,11 @@ function setData(d, info){
   var s = { title: d.title || '', source: info.source || '', loaded: Date.now(),
     cap: old ? old.cap : 1, useMaybe: old ? old.useMaybe : true, showFree: old ? old.showFree : false, mode: old && old.mode || 'kompakt', nextId: 1, slots: [], people: [], pins: {} };
   d.slots.forEach(function(x){ s.slots.push({ id: s.nextId++, day: x.day || '', time: x.time || '', on: true }); });
-  d.people.forEach(function(x){ s.people.push({ id: s.nextId++, name: x.name, orig: x.name, on: true, ans: x.ans.slice() }); });
+  d.people.forEach(function(x){ var p = { id: s.nextId++, name: x.name, orig: x.key || x.name, on: true, ans: x.ans.slice() }; if (x.resp) p.resp = x.resp; s.people.push(p); });
   normalizeDays(s.slots);
-  if (old && samePoll(old, s)){ carryOver(old, s); normalizeDays(s.slots); tidyGroups(s); }
+  /* Bei einer eigenen Umfrage (keep) bleibt immer alles, was von Hand gemacht wurde */
+  if (old && (info.keep || samePoll(old, s))){ carryOver(old, s); normalizeDays(s.slots); tidyGroups(s); }
+  if (info.pollId){ s.pollId = info.pollId; s.sig = info.sig; }
   state = s;
   changed();
 }
@@ -833,6 +911,8 @@ function carryOver(old, s){
       if (op.group) np.group = op.group;
       if (op.hard) np.hard = true;
       old.slots.forEach(function(x, j){ if (x.manual && map[j] >= 0) np.ans[map[j]] = op.ans[j]; });
+      /* von Hand geänderte Antworten bleiben, auch wenn die Familie später neu antwortet */
+      if (op.fix){ np.fix = op.fix; Object.keys(op.fix).forEach(function(k){ if (at[k] != null) np.ans[at[k]] = op.fix[k]; }); }
     } else if (op.manual){
       np = { id: s.nextId++, name: op.name, orig: op.orig, on: op.on, manual: true, group: op.group, hard: op.hard, ans: s.slots.map(function(){ return N; }) };
       old.slots.forEach(function(x, j){ if (map[j] >= 0) np.ans[map[j]] = op.ans[j]; });
@@ -1205,7 +1285,7 @@ function dayMeta(d){
 function renderAll(){
   var on = !!state;
   $('#stepPlan').hidden = !on; $('#stepGrid').hidden = !on; $('#resetBtn').hidden = !on;
-  $('#loadSub').textContent = on ? 'Neue Antworten derselben Umfrage? Die aktuelle Datei einfach nochmals einlesen: Was du angepasst hast, bleibt erhalten.' : 'Die Antworten der Umfrage als CSV- oder Excel-Datei herunterladen und hier hineinziehen.';
+  renderSource();
   if (!on) return;
   last = solve(state);
   $('#useMaybe').checked = !!state.useMaybe;
@@ -1313,7 +1393,7 @@ function renderMeta(){
   if (s.source) bits.push(esc(s.source));
   bits.push(plural(s.people.length, 'Familie', 'Familien'));
   bits.push(plural(s.slots.length, 'Termin', 'Termine'));
-  if (s.loaded) bits.push('eingelesen ' + fmt(new Date(s.loaded), { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }));
+  if (s.loaded) bits.push((s.pollId ? 'aktualisiert ' : 'eingelesen ') + fmt(new Date(s.loaded), { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }));
   $('#meta').innerHTML = bits.map(function(b){ return '<span class="chip">' + b + '</span>'; }).join('');
   var seen = {}, d = [];
   s.people.forEach(function(p){ var k = pkey({ name: p.name }); seen[k] = (seen[k] || 0) + 1; if (seen[k] === 2) d.push(p.name); });
@@ -1368,9 +1448,9 @@ function renderGrid(r){
     h += '<tr class="' + (p.on ? '' : 'off') + (miss ? ' miss' : '') + (row.inGroup ? ' ing' : '') + '" data-row="' + i + '"><th class="who" scope="row"><div class="whoin">' +
       '<input class="nm" type="text" data-act="name" data-p="' + i + '" value="' + esc(p.name) + '" aria-label="Name">' +
       (p.hard ? '<span class="hdot" title="anspruchsvoll" aria-label="anspruchsvoll"></span>' : '') +
-      (p.manual ? '<button type="button" class="del" data-act="delp" data-p="' + i + '" aria-label="' + esc(p.name) + ' entfernen" title="Familie entfernen">🗑</button>' : '') +
+      (p.manual || p.resp ? '<button type="button" class="del" data-act="delp" data-p="' + i + '" aria-label="' + esc(p.name) + ' entfernen" title="' + (p.resp ? 'Antwort löschen' : 'Familie entfernen') + '">🗑</button>' : '') +
       '</div></th>' + order.map(function(j){
-        var v = p.ans[j], cls = v === Y ? 'y' : v === M ? 'm' : 'n', pick = r.slotOf[i] === j;
+        var v = p.ans[j], cls = (v === Y ? 'y' : v === M ? 'm' : 'n') + (p.fix && okey(s.slots[j]) in p.fix ? ' fx' : ''), pick = r.slotOf[i] === j;
         var word = v === Y ? 'Ja' : v === M ? 'Wenn nötig' : 'Nein';
         return '<td' + fc(j, s.slots[j].on ? '' : 'off') + '><button type="button" class="c ' + cls + (pick ? ' pick' : '') + '" data-act="cell" data-p="' + i + '" data-s="' + j + '" aria-label="' +
           esc(p.name + ', ' + slotLabel(s.slots[j]) + ': ' + word + (pick ? ', zugeteilt' : '')) + '">' + (v === Y ? '✓' : v === M ? '(✓)' : '·') + '</button></td>';
@@ -1468,7 +1548,7 @@ function demoData(){
    Die Datenbank zählt «version» bei jeder Änderung hoch. Hat inzwischen ein anderes Fenster gespeichert, wird nichts
    überschrieben, sondern nachgefragt. */
 var acct = { on: false, client: null, user: null, guest: false, carry: null, recovery: false, view: '', mode: 'in',
-  slot: null, dirty: false, saving: null, timer: 0, retry: 0, problem: '', errText: '', list: null, notice: null, nav: 0, busy: false, mail: '', out: false, toast: '' };
+  slot: null, dirty: false, saving: null, timer: 0, retry: 0, problem: '', errText: '', list: null, notice: null, nav: 0, busy: false, mail: '', out: false, toast: '', manual: false, polls: {} };
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 var SAVE_DELAY = 700;
 var ICON_SLOT = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h3"/></svg>';
@@ -1492,7 +1572,7 @@ function showView(v, text){
   document.body.classList.toggle('signed', !!acct.user);
   if (acct.user){ $('#acctMail').textContent = acct.user.email || ''; $('#acctAv').textContent = (acct.user.email || '?').charAt(0); }
   $('#footNote').textContent = acct.user ? 'Deine SmartSlots werden in deinem Konto gespeichert.' : 'Alles wird hier im Browser berechnet.';
-  $('#resetBtn').textContent = acct.slot ? 'Antworten in diesem SmartSlot löschen' : 'Alles löschen';
+  $('#resetBtn').textContent = pollMode() ? 'Einstellungen zurücksetzen' : acct.slot ? 'Antworten in diesem SmartSlot löschen' : 'Alles löschen';
 }
 function note(el, n){
   el.hidden = !n;
@@ -1684,9 +1764,10 @@ function when(ts){
   return diff === 0 ? 'heute, ' + t : diff === 1 ? 'gestern, ' + t : fmt(d, { day: 'numeric', month: 'numeric', year: 'numeric' });
 }
 function slotMeta(x){
-  var m = x.meta || {}, parts = [], fam = +m.families || 0, miss = +m.missing || 0;
+  var m = x.meta || {}, parts = [], fam = +m.families || 0, miss = +m.missing || 0, pl = acct.polls[x.id];
+  if (pl) parts.push('<span class="pbadge' + (pl.open ? '' : ' closed') + '">Umfrage ' + (pl.open ? 'offen' : 'geschlossen') + ' · ' + plural(pl.n, 'Antwort', 'Antworten') + '</span>');
   if (fam) parts.push(plural(fam, 'Familie', 'Familien'), miss ? '<span class="warn">' + miss + ' ohne Termin</span>' : 'alle mit Termin');
-  else parts.push('noch keine Antworten');
+  else if (!pl) parts.push('noch keine Antworten');
   var w = when(x.updated_at);
   if (w) parts.push('geändert ' + esc(w));
   return parts.join(' · ');
@@ -1711,6 +1792,18 @@ async function showList(n){
     return;
   }
   acct.list = r.data || [];
+  renderList();
+  /* Umfragen: offen oder geschlossen, und wie viele Antworten schon da sind */
+  var pr = await pdb('polls').select('id,smartslot_id,open').eq('user_id', acct.user.id);
+  if (nav !== acct.nav || pr.error) return;
+  var by = {}, ids = pr.data.map(function(x){ by[x.id] = { open: x.open, n: 0, slot: x.smartslot_id }; return x.id; });
+  if (ids.length){
+    var rr = await pdb('poll_responses').select('poll_id').in('poll_id', ids);
+    if (nav !== acct.nav || rr.error) return;
+    rr.data.forEach(function(x){ if (by[x.poll_id]) by[x.poll_id].n++; });
+  }
+  acct.polls = {};
+  Object.keys(by).forEach(function(k){ acct.polls[by[k].slot] = by[k]; });
   renderList();
 }
 function renderList(){
@@ -1800,14 +1893,17 @@ async function openSlot(id){
   state = restore(saved); last = null;
   setStatus('', ''); hardMsg(''); $('#hardBox').open = false;
   if (saved && !state) setStatus('err', '<p>Die gespeicherten Antworten konnten nicht gelesen werden. Bitte die Datei nochmals einlesen.</p>');
+  pollReset();
   showView('work');
   $('#slotName').value = row.name;
   renderAll(); saveUI();
   window.scrollTo(0, 0);
+  pollLoad(acct.slot);
 }
 function dropSlot(){
   clearTimeout(acct.timer); clearTimeout(acct.retry);
-  acct.timer = acct.retry = 0; acct.slot = null; acct.dirty = false; acct.problem = '';
+  acct.timer = acct.retry = 0; acct.slot = null; acct.dirty = false; acct.problem = ''; acct.manual = false;
+  pollReset();
   state = null; last = null; setStatus('', ''); hardMsg(''); renderAll(); saveUI();
 }
 /* Vor dem Schliessen: noch Ungespeichertes speichern; geht das nicht, nachfragen */
@@ -1821,11 +1917,12 @@ async function leaveSlot(){
 function isStuck(){ return acct.problem === 'conflict' || acct.problem === 'gone' || (acct.problem === 'error' && !acct.saving); }
 function pack(st){
   var r = st ? solve(st) : null;
-  return { v: 1, meta: st ? { families: r.nOn, missing: r.missing.length, days: r.nDays, file: st.source || '' } : null, state: st };
+  return { v: 1, meta: st ? { families: r.nOn, missing: r.missing.length, days: r.nDays, file: st.source || '', poll: poll.row ? { open: poll.row.open, n: poll.resp.length } : null } : null, state: st };
 }
 function save(){
   if (!acct.slot || acct.problem === 'conflict' || acct.problem === 'gone') return;
   acct.dirty = true;
+  if (!poll.applying) acct.manual = true;   // von Hand geändert, nicht nur neue Antworten eingearbeitet
   clearTimeout(acct.timer);
   acct.timer = setTimeout(flush, SAVE_DELAY);
   saveUI();
@@ -1836,20 +1933,31 @@ function flush(){
   var sl = acct.slot;
   if (!sl || !acct.dirty || acct.problem === 'conflict' || acct.problem === 'gone') return Promise.resolve(!acct.dirty);
   clearTimeout(acct.retry); acct.retry = 0;
-  acct.dirty = false; acct.problem = '';
+  var manual = acct.manual;
+  acct.dirty = false; acct.problem = ''; acct.manual = false;
   var body = pack(state);
   acct.saving = db().update({ data: body }).eq('id', sl.id).eq('version', sl.version).select('version').then(function(r){
     if (r.error) throw r.error;
     if (r.data && r.data.length){ sl.version = r.data[0].version; return true; }
     /* nichts geändert: inzwischen anderswo gespeichert, oder gelöscht */
-    return db().select('id').eq('id', sl.id).then(function(q){
+    return db().select('id,version,data').eq('id', sl.id).then(function(q){
       if (q.error) throw q.error;
-      if (acct.slot === sl){ acct.dirty = true; acct.problem = q.data && q.data.length ? 'conflict' : 'gone'; }
+      if (acct.slot !== sl) return false;
+      var row = q.data && q.data[0];
+      if (row && !manual && poll.row){
+        /* Es kamen nur neue Antworten dazu, und ein anderes Fenster hat sie schon gespeichert: dessen Stand übernehmen */
+        var st = restore(row.data && row.data.state);
+        sl.version = row.version;
+        if (st){ state = st; last = null; }
+        if (!applyPoll()) renderAll();
+        return true;
+      }
+      acct.dirty = true; acct.manual = acct.manual || manual; acct.problem = row ? 'conflict' : 'gone';
       return false;
     });
   }).catch(function(e){
     if (acct.slot === sl){
-      acct.dirty = true; acct.problem = 'error'; acct.errText = dbText(e);
+      acct.dirty = true; acct.manual = acct.manual || manual; acct.problem = 'error'; acct.errText = dbText(e);
       acct.retry = setTimeout(flush, 8000);
     }
     return false;
@@ -1866,7 +1974,7 @@ function flush(){
 function dbText(e){
   var m = e && (e.message || e.details) || String(e), c = e && e.code;
   if (/failed to fetch|networkerror|load failed|network request failed/i.test(m)) return 'Keine Verbindung zum Server.';
-  if (c === 'PGRST205' || c === '42P01' || /smartslots/.test(m) && /could not find|does not exist/i.test(m)) return 'In Supabase fehlt die Tabelle «smartslots»: Bitte das SQL aus supabase/smartslot.sql ausführen.';
+  if (c === 'PGRST205' || c === 'PGRST202' || c === '42P01' || /could not find the (table|function)|does not exist/i.test(m)) return 'In Supabase fehlt noch etwas: Bitte das SQL aus supabase/smartslot.sql (nochmals) ausführen.';
   if (/invalid api key|no api key/i.test(m)) return 'Der Schlüssel in smartslot-config.js stimmt nicht.';
   if (c === 'PGRST301' || c === 'PGRST303' || /jwt/i.test(m)) return 'Die Anmeldung ist abgelaufen. Bitte melde dich neu an.';
   if (c === '42501') return 'Keine Berechtigung: Bitte das SQL aus supabase/smartslot.sql in Supabase ausführen.';
@@ -1906,7 +2014,7 @@ $('#saveToast').addEventListener('click', async function(e){
     b.disabled = true;
     var q = await db().select('version').eq('id', sl.id);
     if (q.error || !q.data || !q.data.length){ b.disabled = false; acct.problem = q.error ? 'conflict' : 'gone'; return saveUI(); }
-    sl.version = q.data[0].version; acct.problem = ''; acct.dirty = true;
+    sl.version = q.data[0].version; acct.problem = ''; acct.dirty = true; acct.manual = true;
     flush();
   } else if (act === 'resave'){
     b.disabled = true;
@@ -1973,6 +2081,233 @@ function initAccount(){
   });
 }
 
+/* ---------- Eigene Umfrage (nur mit Konto) ----------
+   Zu einem SmartSlot gehört höchstens eine Umfrage (Tabelle «polls»). Die Eltern antworten über umfrage.html?t=…
+   ohne Konto (Tabelle «poll_responses», nur über die Funktionen poll_get / poll_answer / poll_mine).
+   Solange der SmartSlot offen ist, holt SmartSlots die Antworten alle 20 Sekunden und beim Zurückkehren ins Fenster.
+   Neue Antworten werden mit dem bisherigen Stand zusammengeführt wie eine neu eingelesene Datei derselben Umfrage:
+   Gruppen, Schwierigkeitsgrad, Stecknadeln, weggelassene Tage und von Hand geänderte Antworten bleiben. */
+var poll = { row: null, resp: [], src: '', timer: 0, busy: false, applying: false, at: 0, err: '', news: [], ed: null, editing: false, loading: false };
+var POLL_EVERY = 20000;
+var POLL_COLS = 'id,token,title,intro,slots,allow_maybe,open,updated_at';
+var RESP_COLS = 'id,name,answers,comment,created_at,updated_at';
+function pdb(t){ return acct.client.from(t); }
+function pollUrl(){ return new URL('umfrage.html?t=' + encodeURIComponent(poll.row.token), location.href).href; }
+function pollMode(){ return !!(acct.slot && poll.row); }
+
+/* Schritt 1: Datei oder eigene Umfrage */
+function renderSource(){
+  var tabs = acct.on && !pollMode() && !poll.loading, src = pollMode() ? 'poll' : !acct.on ? 'file' : poll.src || (acct.slot && !state ? 'poll' : 'file');
+  $('#resetBtn').textContent = pollMode() ? 'Einstellungen zurücksetzen' : acct.slot ? 'Antworten in diesem SmartSlot löschen' : 'Alles löschen';
+  $('#srcSeg').hidden = !tabs;
+  [].forEach.call(document.querySelectorAll('#srcSeg button'), function(b){ b.setAttribute('aria-pressed', String(b.dataset.src === src)); });
+  $('#srcFile').hidden = src !== 'file' || poll.loading;
+  $('#srcPoll').hidden = src !== 'poll' || poll.loading;
+  $('#hLoad').textContent = src === 'poll' ? 'Terminumfrage' : 'Antworten einlesen';
+  $('#loadSub').textContent = src === 'poll'
+    ? (poll.row ? 'Jede neue Antwort erscheint automatisch, und die Verteilung passt sich an.' : 'Termine vorschlagen und den Link an die Eltern schicken. Die Antworten kommen direkt hierher.')
+    : state ? 'Neue Antworten derselben Umfrage? Die aktuelle Datei einfach nochmals einlesen: Was du angepasst hast, bleibt erhalten.' : 'Die Antworten der Umfrage als CSV- oder Excel-Datei herunterladen und hier hineinziehen.';
+  $('#pollGuest').hidden = src !== 'poll' || !!acct.slot;
+  var editing = src === 'poll' && acct.slot && !poll.loading && (!poll.row || poll.editing);
+  if (editing && !poll.ed) edStart();
+  $('#pollForm').hidden = !editing;
+  $('#pollView').hidden = !(src === 'poll' && poll.row && !poll.editing);
+  $('#addSlot').hidden = pollMode();
+}
+$('#srcSeg').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-src]');
+  if (!b) return;
+  poll.src = b.dataset.src;
+  renderSource();
+});
+$('#pollLoginBtn').addEventListener('click', function(){ $('#guestLoginBtn').click(); });
+
+/* ---------- Umfrage bearbeiten ---------- */
+function rid(){ return Math.random().toString(36).slice(2, 10); }
+function hm(t){ var m = /^(\d{1,2}):(\d{2})/.exec(t || ''); return m ? +m[1] * 60 + +m[2] : -1; }
+function hhmm(n){ return (n < 600 ? '0' : '') + Math.floor(n / 60) + ':' + (n % 60 < 10 ? '0' : '') + n % 60; }
+function dayText(iso){ return fmt(new Date(iso + 'T12:00:00'), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
+function edStart(){
+  var P = poll.row, days = {};
+  (P ? P.slots : []).forEach(function(x){ if (x.date) (days[x.date] = days[x.date] || []).push({ id: x.id, from: x.from, to: x.to }); });
+  poll.ed = { days: days };
+  $('#pTitle').value = P ? P.title : acct.slot ? acct.slot.name : '';
+  $('#pIntro').value = P ? P.intro : '';
+  $('#pMaybe').checked = P ? P.allow_maybe : true;
+  $('#pSave').textContent = P ? 'Änderungen speichern' : 'Umfrage erstellen';
+  $('#pCancel').hidden = !P;
+  note($('#pMsg'), null);
+  edRender();
+}
+function edSlots(){
+  var days = poll.ed.days, out = [];
+  Object.keys(days).sort().forEach(function(d){
+    days[d].slice().sort(function(a, b){ return hm(a.from) - hm(b.from); }).forEach(function(t){
+      out.push({ id: t.id, date: d, from: t.from, to: t.to, day: dayText(d), time: t.from + '–' + t.to });
+    });
+  });
+  return out;
+}
+function edRender(){
+  var days = poll.ed.days, keys = Object.keys(days).sort();
+  $('#pList').innerHTML = !keys.length ? '<p class="pempty">Noch keine Termine.</p>' : keys.map(function(d){
+    var ts = days[d].slice().sort(function(a, b){ return hm(a.from) - hm(b.from); });
+    return '<div class="pday"><header><h3>' + esc(dayText(d)) + ' <span class="pn">' + plural(ts.length, 'Termin', 'Termine') + '</span></h3>' +
+      '<button type="button" class="linkbtn" data-act="pdelday" data-d="' + esc(d) + '">Tag entfernen</button></header><div class="ptimes">' + ts.map(function(t){
+        return '<span class="ptime">' + esc(t.from + '–' + t.to) + '<button type="button" class="hx" data-act="pdeltime" data-d="' + esc(d) + '" data-id="' + esc(t.id) + '" aria-label="' + esc(t.from) + ' entfernen" title="entfernen">×</button></span>';
+      }).join('') + '</div></div>';
+  }).join('');
+}
+$('#pAdd').addEventListener('click', function(){
+  var d = $('#pDate').value, a = hm($('#pFrom').value), b = hm($('#pTo').value), len = Math.round(+$('#pLen').value);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return note($('#pMsg'), txt('err', 'Bitte zuerst ein Datum wählen.'));
+  if (a < 0 || b < 0) return note($('#pMsg'), txt('err', 'Bitte die Zeiten als Stunde:Minute eingeben, z. B. 16:00.'));
+  if (!(len >= 5 && len <= 240)) return note($('#pMsg'), txt('err', 'Die Dauer muss zwischen 5 und 240 Minuten liegen.'));
+  if (b < a + len) return note($('#pMsg'), txt('err', '«bis» muss mindestens ' + len + ' Minuten nach «von» sein.'));
+  var list = poll.ed.days[d] = poll.ed.days[d] || [], have = {}, n = 0;
+  list.forEach(function(t){ have[t.from] = true; });
+  for (var t = a; t + len <= b; t += len){
+    if (have[hhmm(t)]) continue;
+    list.push({ id: rid(), from: hhmm(t), to: hhmm(t + len) }); n++;
+  }
+  if (edSlots().length > 300){ list.splice(list.length - n, n); return note($('#pMsg'), txt('err', 'Höchstens 300 Termine pro Umfrage.')); }
+  note($('#pMsg'), n ? null : txt('', 'Diese Zeiten gibt es an diesem Tag schon.'));
+  edRender();
+  /* nächster Tag vorschlagen, Zeiten bleiben */
+  var nx = new Date(d + 'T12:00:00'); nx.setDate(nx.getDate() + 1);
+  $('#pDate').value = nx.getFullYear() + '-' + ('0' + (nx.getMonth() + 1)).slice(-2) + '-' + ('0' + nx.getDate()).slice(-2);
+});
+$('#pList').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-act]');
+  if (!b) return;
+  var days = poll.ed.days, d = b.dataset.d;
+  if (b.dataset.act === 'pdelday') delete days[d];
+  else { days[d] = days[d].filter(function(t){ return t.id !== b.dataset.id; }); if (!days[d].length) delete days[d]; }
+  edRender();
+});
+$('#pCancel').addEventListener('click', function(){ poll.editing = false; poll.ed = null; renderSource(); });
+$('#pollForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  var sl = acct.slot, P = poll.row, slots = edSlots(), title = clean($('#pTitle').value).slice(0, 200) || sl.name;
+  if (!slots.length) return note($('#pMsg'), txt('err', 'Bitte zuerst Termine hinzufügen: Datum und Zeitraum wählen, dann «+ Hinzufügen».'));
+  if (!P && state && state.people.length && !confirm('In diesem SmartSlot sind schon Antworten aus einer Datei. Sie werden durch die Antworten der Umfrage ersetzt. Weiter?')) return;
+  if (P){
+    var keep = {}, lost = 0;
+    slots.forEach(function(x){ keep[x.id] = true; });
+    poll.resp.forEach(function(r){ if (Object.keys(r.answers || {}).some(function(k){ return !keep[k] && r.answers[k] > 0; })) lost++; });
+    if (lost && !confirm(lost === 1 ? 'Eine Familie hat bei einem entfernten Termin zugesagt. Trotzdem speichern?' : lost + ' Familien haben bei entfernten Terminen zugesagt. Trotzdem speichern?')) return;
+  }
+  var body = { title: title, intro: $('#pIntro').value.slice(0, 2000), slots: slots, allow_maybe: $('#pMaybe').checked };
+  var btn = $('#pSave'); btn.disabled = true;
+  var r = P ? await pdb('polls').update(body).eq('id', P.id).select(POLL_COLS)
+            : await pdb('polls').insert(Object.assign({ smartslot_id: sl.id }, body)).select(POLL_COLS);
+  btn.disabled = false;
+  if (acct.slot !== sl) return;
+  if (r.error || !r.data || !r.data.length) return note($('#pMsg'), txt('err', 'Die Umfrage konnte nicht gespeichert werden. ' + (r.error ? dbText(r.error) : '')));
+  poll.row = r.data[0]; poll.editing = false; poll.ed = null;
+  if (!P){ poll.resp = []; poll.at = Date.now(); applyPoll(); }
+  else await refreshPoll(true);
+  renderSource(); renderPollView();
+  pollTick();
+  if (!P) $('#pvLink').focus();
+});
+
+/* ---------- Umfrage anzeigen ---------- */
+function renderPollView(){
+  var P = poll.row;
+  if (!P) return;
+  var n = poll.resp.length, lastR = poll.resp.reduce(function(a, r){ return !a || r.updated_at > a.updated_at ? r : a; }, null);
+  var bits = ['<span class="pdot" aria-hidden="true"></span><b>' + (P.open ? 'Offen' : 'Geschlossen') + '</b>', plural(n, 'Antwort', 'Antworten')];
+  if (lastR) bits.push('zuletzt: ' + esc(lastR.name) + ', ' + esc(when(lastR.updated_at)));
+  if (poll.news.length) bits.push('<span class="pnew">' + (poll.news.length === 1 ? 'neu: ' + esc(poll.news[0]) : poll.news.length + ' neue Antworten') + '</span>');
+  if (poll.err) bits.push('<span class="perr">Aktualisieren ging nicht: ' + esc(poll.err) + '</span>');
+  var st = $('#pvState');
+  st.className = 'pstate' + (P.open ? '' : ' closed');
+  st.innerHTML = bits.join(' · ');
+  var url = pollUrl();
+  $('#pvLink').value = url;
+  $('#pvOpen').href = url;
+  $('#pvMail').href = 'mailto:?subject=' + encodeURIComponent(P.title) + '&body=' + encodeURIComponent((P.intro ? P.intro + '\n\n' : '') + 'Bitte tragen Sie hier ein, welche Termine für Sie passen:\n' + url);
+  $('#pvToggle').textContent = P.open ? 'Umfrage schliessen' : 'Umfrage wieder öffnen';
+  var cm = poll.resp.filter(function(r){ return clean(r.comment); });
+  $('#pvComments').hidden = !cm.length;
+  $('#pvCcount').textContent = cm.length;
+  $('#pvClist').innerHTML = cm.map(function(r){ return '<li><b>' + esc(r.name) + ':</b> ' + esc(r.comment) + '</li>'; }).join('');
+}
+$('#pvCopy').addEventListener('click', function(){ var b = this; copyText($('#pvLink').value).then(function(){ flash(b, '✓ Kopiert'); }, function(){ $('#pvLink').select(); flash(b, 'Bitte von Hand kopieren'); }); });
+$('#pvLink').addEventListener('focus', function(){ this.select(); });
+$('#pvEdit').addEventListener('click', function(){ poll.editing = true; poll.ed = null; renderSource(); $('#pTitle').focus(); });
+$('#pvRefresh').addEventListener('click', function(){ refreshPoll(true); });
+$('#pvToggle').addEventListener('click', async function(){
+  var P = poll.row, b = this;
+  if (P.open && !confirm('Umfrage schliessen? Danach können die Eltern nicht mehr antworten. Du kannst sie später wieder öffnen.')) return;
+  b.disabled = true;
+  var r = await pdb('polls').update({ open: !P.open }).eq('id', P.id).select(POLL_COLS);
+  b.disabled = false;
+  if (r.error || !r.data || !r.data.length){ poll.err = r.error ? dbText(r.error) : 'nicht gefunden'; return renderPollView(); }
+  poll.row = r.data[0]; poll.err = '';
+  applyPoll(); renderPollView();
+});
+
+/* ---------- Antworten holen und einarbeiten ---------- */
+function pollData(){
+  var P = poll.row;
+  return { title: P.title, slots: P.slots.map(function(x){ return { day: x.day, time: x.time }; }), people: poll.resp.map(function(r){
+    return { name: clean(r.name) || 'Ohne Namen', key: 'r:' + r.id, resp: r.id, ans: P.slots.map(function(x){ var v = r.answers && r.answers[x.id]; return v === 2 ? Y : v === 1 && P.allow_maybe ? M : N; }) };
+  }) };
+}
+function pollSig(){ return poll.row.id + '|' + poll.row.updated_at + '|' + poll.resp.map(function(r){ return r.id + '@' + r.updated_at; }).join(','); }
+function applyPoll(){
+  var sig = pollSig();
+  if (state && state.sig === sig) return false;
+  poll.applying = true;
+  try { setData(pollData(), { source: 'Umfrage', keep: true, pollId: poll.row.id, sig: sig }); }
+  finally { poll.applying = false; }
+  return true;
+}
+/* nicht mitten in eine Eingabe oder ein Ziehen hinein neu zeichnen */
+function pollBusyUI(){ var a = document.activeElement; return !!drag || !!(a && a.matches && a.matches('#grid input, #stepPlan input')); }
+async function refreshPoll(manual){
+  var sl = acct.slot, P = poll.row;
+  if (!sl || !P || poll.busy) return;
+  if (!manual && (document.hidden || pollBusyUI())) return;
+  poll.busy = true;
+  var r = await pdb('poll_responses').select(RESP_COLS).eq('poll_id', P.id).order('created_at', { ascending: true });
+  poll.busy = false;
+  if (acct.slot !== sl || poll.row !== P) return;
+  if (r.error){ poll.err = dbText(r.error); renderPollView(); return; }
+  var old = {};
+  poll.resp.forEach(function(x){ old[x.id] = true; });
+  if (poll.at) poll.news = poll.news.concat(r.data.filter(function(x){ return !old[x.id]; }).map(function(x){ return x.name; }));
+  poll.resp = r.data; poll.at = Date.now(); poll.err = '';
+  if (applyPoll() && poll.news.length) setTimeout(function(){ poll.news = []; renderPollView(); }, 15000);
+  renderPollView();
+}
+function pollTick(){
+  clearTimeout(poll.timer);
+  if (!acct.slot || !poll.row) return;
+  poll.timer = setTimeout(function(){ refreshPoll(false).then(pollTick, pollTick); }, POLL_EVERY);
+}
+async function pollLoad(sl){
+  poll.loading = true; renderSource();
+  var r = await pdb('polls').select(POLL_COLS).eq('smartslot_id', sl.id);
+  if (acct.slot !== sl) return;
+  poll.loading = false;
+  if (r.error){ poll.err = dbText(r.error); renderSource(); return; }
+  poll.row = r.data && r.data[0] || null;
+  renderSource();
+  if (poll.row){ await refreshPoll(true); pollTick(); }
+}
+function pollReset(){ clearTimeout(poll.timer); poll.row = null; poll.resp = []; poll.src = ''; poll.at = 0; poll.err = ''; poll.news = []; poll.ed = null; poll.editing = false; poll.loading = false; }
+async function pollDelete(p){
+  if (!confirm('Die Antwort von «' + p.name + '» löschen? Sie verschwindet auch aus der Umfrage.')) return;
+  var r = await pdb('poll_responses').delete().eq('id', p.resp);
+  if (r.error){ poll.err = dbText(r.error); renderPollView(); return; }
+  poll.resp = poll.resp.filter(function(x){ return x.id !== p.resp; });
+  applyPoll(); renderPollView();
+}
+document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible' && poll.row) refreshPoll(false); });
+
 /* ---------- Bedienung ---------- */
 $('#fileBtn').addEventListener('click', function(){ $('#file').click(); });
 (function(){
@@ -2004,6 +2339,7 @@ $('#grid').addEventListener('click', function(e){
   if (act === 'cell'){
     var p = state.people[i];
     p.ans[j] = p.ans[j] === N ? Y : p.ans[j] === Y ? M : N;
+    (p.fix = p.fix || {})[okey(state.slots[j])] = p.ans[j];
     changed('#grid .c[data-p="' + i + '"][data-s="' + j + '"]');
   } else if (act === 'dels'){
     var id = state.slots[j].id;
@@ -2012,6 +2348,7 @@ $('#grid').addEventListener('click', function(e){
     Object.keys(state.pins).forEach(function(k){ if (state.pins[k] === id) delete state.pins[k]; });
     changed();
   } else if (act === 'delp'){
+    if (state.people[i].resp){ pollDelete(state.people[i]); return; }
     delete state.pins[state.people[i].id];
     state.people.splice(i, 1);
     tidyGroups();
@@ -2174,6 +2511,12 @@ $('#csvBtn').addEventListener('click', function(){
 });
 $('#printBtn').addEventListener('click', function(){ window.print(); });
 $('#resetBtn').addEventListener('click', function(){
+  if (pollMode()){
+    if (!confirm('Gruppen, Schwierigkeitsgrad, Stecknadeln, weggelassene Tage und Änderungen von Hand zurücksetzen? Die Antworten der Eltern bleiben.')) return;
+    state = null; last = null;
+    applyPoll();
+    return;
+  }
   if (acct.slot){
     if (!confirm('Alle Antworten und Zuteilungen in «' + acct.slot.name + '» löschen? Der SmartSlot selbst bleibt bestehen.')) return;
     state = null; last = null; setStatus('', '');
