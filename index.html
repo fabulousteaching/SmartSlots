@@ -344,9 +344,21 @@ input[type=date],input[type=time]{font:inherit}
 .padd input{min-height:40px;padding:.3em .6em;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);font-weight:400;color:var(--ink)}
 .padd input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .padd input[type=number]{width:4.6em}
-.plen{display:inline-flex;align-items:center;gap:6px;font-weight:400}
+.padd select{min-height:40px;padding:.3em .5em;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-weight:400}
+.padd select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.pend{display:flex;flex-direction:column;gap:4px;font-size:.84rem;font-weight:600;color:var(--ink-2)}
+.pend b{display:flex;align-items:center;min-height:40px;min-width:3.2em;font-size:1rem;font-weight:650;color:var(--ink);font-variant-numeric:tabular-nums}
+.ppause{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 12px;font-size:.88rem;font-weight:600;color:var(--ink-2)}
+.ppause .seg{flex-wrap:wrap}
+.ppause .seg button{min-height:32px;padding:.3em .75em}
+.prows{list-style:none;margin:0;padding:0}
+.prow{display:flex;align-items:center;gap:12px;min-height:36px;border-top:1px solid var(--line);font-size:.92rem}
+.prow:first-child{border-top:0}
+.prow .pt{font-variant-numeric:tabular-nums;font-weight:600;min-width:7.5em}
+.prow .pl{flex:1;color:var(--ink-3);font-size:.86rem}
+.prow .pg{color:var(--ink-3);font-size:.8rem}
 .padd .btn{min-height:40px}
-.pday{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 10px}
+.pday{border:1px solid var(--line);border-radius:12px;padding:10px 12px 6px;margin:0 0 10px}
 .pday header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;align-items:baseline;margin-bottom:8px}
 .pday h3{font-size:.95rem;font-weight:650}
 .pday .pn{font-size:.82rem;color:var(--ink-3);font-weight:500}
@@ -478,16 +490,21 @@ input[type=date],input[type=time]{font:inherit}
       <label class="fld"><span>Titel für die Eltern</span><input type="text" id="pTitle" maxlength="200" autocomplete="off"></label>
       <label class="fld"><span>Nachricht an die Eltern <i>(freiwillig)</i></span><textarea id="pIntro" rows="3" maxlength="2000" placeholder="z. B. Bitte geben Sie an, welche Zeiten für Sie passen. Ein Gespräch dauert 20 Minuten."></textarea></label>
       <div class="fld"><span>Termine</span>
+        <div class="ppause"><span id="pPauseLab">Pause zwischen den Gesprächen</span>
+          <div class="seg" id="pPause" role="group" aria-labelledby="pPauseLab">
+            <button type="button" data-p="0" aria-pressed="true">keine</button><button type="button" data-p="5" aria-pressed="false">5 Min.</button><button type="button" data-p="10" aria-pressed="false">10 Min.</button><button type="button" data-p="15" aria-pressed="false">15 Min.</button><button type="button" data-p="20" aria-pressed="false">20 Min.</button><button type="button" data-p="30" aria-pressed="false">30 Min.</button>
+          </div>
+        </div>
+        <div id="pList"></div>
         <div class="padd">
           <label>Datum<input type="date" id="pDate"></label>
-          <label>von<input type="time" id="pFrom" value="16:00"></label>
-          <label>bis<input type="time" id="pTo" value="18:00"></label>
-          <label>Dauer<span class="plen"><input type="number" id="pLen" value="20" min="5" max="240" step="5"> Min.</span></label>
-          <button type="button" class="btn small" id="pAdd">+ Hinzufügen</button>
+          <label>Beginn<input type="time" id="pFrom" value="16:00" step="300"></label>
+          <label>Dauer<select id="pLen"></select></label>
+          <span class="pend"><span>Ende</span><b id="pEnd">16:20</b></span>
+          <button type="button" class="btn small primary" id="pAdd">+ Hinzufügen</button>
         </div>
-        <p class="hint">Datum und Zeitraum wählen: SmartSlots teilt den Zeitraum in Gespräche auf. Für weitere Tage einfach wiederholen.</p>
+        <p class="hint">Nach «Hinzufügen» steht der nächste Termin schon bereit: Er beginnt nach dem letzten, mit der gewählten Pause.</p>
       </div>
-      <div id="pList"></div>
       <label class="check"><input type="checkbox" id="pMaybe" checked> Eltern dürfen «Wenn nötig» wählen</label>
       <div class="amsg" id="pMsg" role="status" aria-live="polite" hidden></div>
       <div class="pbtns"><button class="btn primary" type="submit" id="pSave">Umfrage erstellen</button><button type="button" class="btn" id="pCancel" hidden>Abbrechen</button></div>
@@ -2128,16 +2145,25 @@ function hm(t){ var m = /^(\d{1,2}):(\d{2})/.exec(t || ''); return m ? +m[1] * 6
 function hhmm(n){ return (n < 600 ? '0' : '') + Math.floor(n / 60) + ':' + (n % 60 < 10 ? '0' : '') + n % 60; }
 function dayText(iso){ return fmt(new Date(iso + 'T12:00:00'), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
 function edStart(){
-  var P = poll.row, days = {};
-  (P ? P.slots : []).forEach(function(x){ if (x.date) (days[x.date] = days[x.date] || []).push({ id: x.id, from: x.from, to: x.to }); });
-  poll.ed = { days: days };
+  var P = poll.row, days = {}, all = P ? P.slots.filter(function(x){ return x.date; }) : [];
+  all.forEach(function(x){ (days[x.date] = days[x.date] || []).push({ id: x.id, from: x.from, to: x.to }); });
+  poll.ed = { days: days, pause: 0 };
+  /* weiter, wo die Umfrage aufhört: gleiche Dauer und Pause wie zuletzt */
+  var sorted = edSlots(), lastS = sorted[sorted.length - 1], prev = sorted[sorted.length - 2], len = 20;
+  if (lastS){
+    len = Math.min(180, Math.max(5, Math.round((hm(lastS.to) - hm(lastS.from)) / 5) * 5));
+    if (prev && prev.date === lastS.date){ var g = hm(lastS.from) - hm(prev.to); if (g >= 0 && g <= 30 && g % 5 === 0) poll.ed.pause = g; }
+  }
   $('#pTitle').value = P ? P.title : acct.slot ? acct.slot.name : '';
   $('#pIntro').value = P ? P.intro : '';
   $('#pMaybe').checked = P ? P.allow_maybe : true;
   $('#pSave').textContent = P ? 'Änderungen speichern' : 'Umfrage erstellen';
   $('#pCancel').hidden = !P;
+  $('#pDate').value = lastS ? lastS.date : '';
+  $('#pFrom').value = lastS ? hhmm(hm(lastS.to) + poll.ed.pause) : '16:00';
+  $('#pLen').value = String(len);
   note($('#pMsg'), null);
-  edRender();
+  edPause(); edEnd(); edRender();
 }
 function edSlots(){
   var days = poll.ed.days, out = [];
@@ -2150,32 +2176,54 @@ function edSlots(){
 }
 function edRender(){
   var days = poll.ed.days, keys = Object.keys(days).sort();
-  $('#pList').innerHTML = !keys.length ? '<p class="pempty">Noch keine Termine.</p>' : keys.map(function(d){
+  $('#pList').innerHTML = !keys.length ? '<p class="pempty">Noch keine Termine. Datum, Beginn und Dauer wählen, dann «+ Hinzufügen».</p>' : keys.map(function(d){
     var ts = days[d].slice().sort(function(a, b){ return hm(a.from) - hm(b.from); });
     return '<div class="pday"><header><h3>' + esc(dayText(d)) + ' <span class="pn">' + plural(ts.length, 'Termin', 'Termine') + '</span></h3>' +
-      '<button type="button" class="linkbtn" data-act="pdelday" data-d="' + esc(d) + '">Tag entfernen</button></header><div class="ptimes">' + ts.map(function(t){
-        return '<span class="ptime">' + esc(t.from + '–' + t.to) + '<button type="button" class="hx" data-act="pdeltime" data-d="' + esc(d) + '" data-id="' + esc(t.id) + '" aria-label="' + esc(t.from) + ' entfernen" title="entfernen">×</button></span>';
-      }).join('') + '</div></div>';
+      '<button type="button" class="linkbtn" data-act="pdelday" data-d="' + esc(d) + '">Tag entfernen</button></header><ul class="prows">' + ts.map(function(t, k){
+        var gap = k ? hm(t.from) - hm(ts[k - 1].to) : 0;
+        return '<li class="prow"><span class="pt">' + esc(t.from + '–' + t.to) + '</span><span class="pl">' + (hm(t.to) - hm(t.from)) + ' Min.' +
+          (gap > 0 ? ' <span class="pg">· ' + gap + ' Min. Pause davor</span>' : '') + '</span>' +
+          '<button type="button" class="hx" data-act="pdeltime" data-d="' + esc(d) + '" data-id="' + esc(t.id) + '" aria-label="' + esc(t.from) + ' entfernen" title="entfernen">×</button></li>';
+      }).join('') + '</ul></div>';
   }).join('');
 }
+/* Dauer in 5-Minuten-Schritten, Ende wird berechnet */
+(function(){ var h = ''; for (var m = 5; m <= 180; m += 5) h += '<option value="' + m + '"' + (m === 20 ? ' selected' : '') + '>' + m + ' Min.</option>'; $('#pLen').innerHTML = h; })();
+function edEnd(){ var a = hm($('#pFrom').value), len = +$('#pLen').value; $('#pEnd').textContent = a >= 0 && a + len <= 1440 ? hhmm(a + len) : '–'; }
+function edPause(){ [].forEach.call(document.querySelectorAll('#pPause button'), function(b){ b.setAttribute('aria-pressed', String(+b.dataset.p === poll.ed.pause)); }); }
+/* nächster Beginn: nach dem letzten Termin an diesem Tag, plus Pause */
+function edNext(){
+  var list = poll.ed.days[$('#pDate').value] || [], end = -1;
+  list.forEach(function(t){ end = Math.max(end, hm(t.to)); });
+  if (end >= 0) $('#pFrom').value = hhmm(Math.min(end + poll.ed.pause, 1435));
+  edEnd();
+}
+$('#pFrom').addEventListener('input', edEnd);
+$('#pLen').addEventListener('change', edEnd);
+$('#pDate').addEventListener('change', edNext);
+$('#pPause').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-p]');
+  if (!b) return;
+  poll.ed.pause = +b.dataset.p;
+  edPause(); edNext();
+});
+/* Enter in der Zeile fügt hinzu (statt die ganze Umfrage zu speichern) */
+document.querySelector('.padd').addEventListener('keydown', function(e){
+  if (e.key === 'Enter' && e.target.matches('input, select')){ e.preventDefault(); $('#pAdd').click(); }
+});
 $('#pAdd').addEventListener('click', function(){
-  var d = $('#pDate').value, a = hm($('#pFrom').value), b = hm($('#pTo').value), len = Math.round(+$('#pLen').value);
+  var d = $('#pDate').value, a = hm($('#pFrom').value), len = +$('#pLen').value, b = a + len;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return note($('#pMsg'), txt('err', 'Bitte zuerst ein Datum wählen.'));
-  if (a < 0 || b < 0) return note($('#pMsg'), txt('err', 'Bitte die Zeiten als Stunde:Minute eingeben, z. B. 16:00.'));
-  if (!(len >= 5 && len <= 240)) return note($('#pMsg'), txt('err', 'Die Dauer muss zwischen 5 und 240 Minuten liegen.'));
-  if (b < a + len) return note($('#pMsg'), txt('err', '«bis» muss mindestens ' + len + ' Minuten nach «von» sein.'));
-  var list = poll.ed.days[d] = poll.ed.days[d] || [], have = {}, n = 0;
-  list.forEach(function(t){ have[t.from] = true; });
-  for (var t = a; t + len <= b; t += len){
-    if (have[hhmm(t)]) continue;
-    list.push({ id: rid(), from: hhmm(t), to: hhmm(t + len) }); n++;
-  }
-  if (edSlots().length > 300){ list.splice(list.length - n, n); return note($('#pMsg'), txt('err', 'Höchstens 300 Termine pro Umfrage.')); }
-  note($('#pMsg'), n ? null : txt('', 'Diese Zeiten gibt es an diesem Tag schon.'));
+  if (a < 0) return note($('#pMsg'), txt('err', 'Bitte den Beginn als Stunde:Minute eingeben, z. B. 16:00.'));
+  if (b > 1440) return note($('#pMsg'), txt('err', 'Der Termin muss vor Mitternacht enden.'));
+  var list = poll.ed.days[d] || [], hit = list.filter(function(t){ return hm(t.from) < b && a < hm(t.to); })[0];
+  if (hit) return note($('#pMsg'), txt('err', 'Dieser Termin überschneidet sich mit ' + hit.from + '–' + hit.to + '.'));
+  if (edSlots().length >= 300) return note($('#pMsg'), txt('err', 'Höchstens 300 Termine pro Umfrage.'));
+  poll.ed.days[d] = list.concat({ id: rid(), from: hhmm(a), to: hhmm(b) });
+  note($('#pMsg'), null);
   edRender();
-  /* nächster Tag vorschlagen, Zeiten bleiben */
-  var nx = new Date(d + 'T12:00:00'); nx.setDate(nx.getDate() + 1);
-  $('#pDate').value = nx.getFullYear() + '-' + ('0' + (nx.getMonth() + 1)).slice(-2) + '-' + ('0' + nx.getDate()).slice(-2);
+  $('#pFrom').value = hhmm(Math.min(b + poll.ed.pause, 1435));
+  edEnd();
 });
 $('#pList').addEventListener('click', function(e){
   var b = e.target.closest('button[data-act]');
@@ -2189,7 +2237,7 @@ $('#pCancel').addEventListener('click', function(){ poll.editing = false; poll.e
 $('#pollForm').addEventListener('submit', async function(e){
   e.preventDefault();
   var sl = acct.slot, P = poll.row, slots = edSlots(), title = clean($('#pTitle').value).slice(0, 200) || sl.name;
-  if (!slots.length) return note($('#pMsg'), txt('err', 'Bitte zuerst Termine hinzufügen: Datum und Zeitraum wählen, dann «+ Hinzufügen».'));
+  if (!slots.length) return note($('#pMsg'), txt('err', 'Bitte zuerst Termine hinzufügen: Datum, Beginn und Dauer wählen, dann «+ Hinzufügen».'));
   if (!P && state && state.people.length && !confirm('In diesem SmartSlot sind schon Antworten aus einer Datei. Sie werden durch die Antworten der Umfrage ersetzt. Weiter?')) return;
   if (P){
     var keep = {}, lost = 0;
