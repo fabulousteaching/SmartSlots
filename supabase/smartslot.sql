@@ -91,6 +91,8 @@ grant select, insert, update, delete on public.polls to authenticated;
 -- Die Lehrperson liest die Antworten (ohne den Schlüssel, mit dem Eltern ihre Antwort ändern) und kann sie löschen
 grant select (id, poll_id, name, answers, comment, created_at, updated_at) on public.poll_responses to authenticated;
 grant delete on public.poll_responses to authenticated;
+-- Den Namen darf die Lehrperson anpassen (die Eltern sehen dann den neuen Namen), sonst nichts
+grant update (name) on public.poll_responses to authenticated;
 
 drop policy if exists "polls lesen" on public.polls;
 drop policy if exists "polls erstellen" on public.polls;
@@ -108,10 +110,26 @@ create policy "polls löschen" on public.polls for delete to authenticated
 
 drop policy if exists "antworten lesen" on public.poll_responses;
 drop policy if exists "antworten löschen" on public.poll_responses;
+drop policy if exists "antworten ändern" on public.poll_responses;
 create policy "antworten lesen" on public.poll_responses for select to authenticated
   using (exists (select 1 from public.polls p where p.id = poll_id and p.user_id = (select auth.uid())));
 create policy "antworten löschen" on public.poll_responses for delete to authenticated
   using (exists (select 1 from public.polls p where p.id = poll_id and p.user_id = (select auth.uid())));
+create policy "antworten ändern" on public.poll_responses for update to authenticated
+  using (exists (select 1 from public.polls p where p.id = poll_id and p.user_id = (select auth.uid())))
+  with check (exists (select 1 from public.polls p where p.id = poll_id and p.user_id = (select auth.uid())));
+
+-- Bei jeder Änderung einer Antwort die Zeit festhalten
+create or replace function public.poll_responses_touch() returns trigger
+language plpgsql set search_path = '' as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
+drop trigger if exists poll_responses_touch on public.poll_responses;
+create trigger poll_responses_touch before update on public.poll_responses
+  for each row execute function public.poll_responses_touch();
 
 create or replace function public.polls_touch() returns trigger
 language plpgsql set search_path = '' as $$

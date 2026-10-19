@@ -2491,6 +2491,18 @@ async function pollLoad(sl){
   if (poll.row){ await refreshPoll(true); pollTick(); }
 }
 function pollReset(){ clearTimeout(poll.timer); poll.row = null; poll.resp = []; poll.src = ''; poll.at = 0; poll.err = ''; poll.news = []; poll.ed = null; poll.editing = false; poll.loading = false; }
+/* Name in der Tabelle geändert: auch in der Umfrage ändern, damit die Familie ihn beim Ändern ihrer Antwort sieht */
+async function pollRename(p, name){
+  var sl = acct.slot, r = await pdb('poll_responses').update({ name: name.slice(0, 120) }).eq('id', p.resp).select('id,updated_at');
+  if (acct.slot !== sl) return;
+  if (r.error || !r.data || !r.data.length){ poll.err = 'Der Name konnte in der Umfrage nicht geändert werden. ' + (r.error ? dbText(r.error) : ''); renderPollView(); return; }
+  var x = poll.resp.filter(function(y){ return y.id === p.resp; })[0];
+  if (x){ x.name = name.slice(0, 120); x.updated_at = r.data[0].updated_at; }
+  p.from = name;   // gilt jetzt als Name aus der Umfrage
+  if (state && poll.row) state.sig = pollSig();
+  poll.err = '';
+  save(); renderPollView();
+}
 async function pollDelete(p){
   if (!confirm('Die Antwort von «' + p.name + '» löschen? Sie verschwindet auch aus der Umfrage.')) return;
   var r = await pdb('poll_responses').delete().eq('id', p.resp);
@@ -2650,7 +2662,7 @@ $('#grid').addEventListener('change', function(e){
   var t = e.target, act = t.dataset.act;
   if (act === 'name'){
     var v = clean(t.value), p = state.people[+t.dataset.p];
-    if (v){ p.name = v; changed(null, true); } else t.value = p.name;
+    if (v){ p.name = v; changed(null, true); if (p.resp && pollMode()) pollRename(p, v); } else t.value = p.name;
   }
 });
 $('#grid').addEventListener('keydown', function(e){ if (e.key === 'Enter' && e.target.dataset.act === 'name') e.target.blur(); });
