@@ -2017,7 +2017,11 @@ function flush(){
 function dbText(e){
   var m = e && (e.message || e.details) || String(e), c = e && e.code;
   if (/failed to fetch|networkerror|load failed|network request failed/i.test(m)) return 'Keine Verbindung zum Server.';
-  if (c === 'PGRST205' || c === 'PGRST202' || c === '42P01' || /could not find the (table|function)|does not exist/i.test(m)) return 'In Supabase fehlt noch etwas: Bitte das SQL aus supabase/smartslot.sql (nochmals) ausführen.';
+  if (c === 'PGRST205' || c === 'PGRST202' || c === '42P01' || c === '42883' || /could not find the (table|function)|does not exist/i.test(m)){
+    /* genau sagen, was fehlt: «Could not find the table 'public.polls' …», «relation "public.polls" does not exist» */
+    var w = /(table|function|relation)\s+["']?(?:public\.)?([a-z_]+)/i.exec(m), what = w ? (/function/i.test(w[1]) ? 'die Funktion «' : 'die Tabelle «') + w[2] + '»' : 'noch etwas';
+    return 'In Supabase fehlt ' + what + ': Bitte das SQL aus supabase/smartslot.sql nochmals ganz ausführen.';
+  }
   if (/invalid api key|no api key/i.test(m)) return 'Der Schlüssel in smartslot-config.js stimmt nicht.';
   if (c === 'PGRST301' || c === 'PGRST303' || /jwt/i.test(m)) return 'Die Anmeldung ist abgelaufen. Bitte melde dich neu an.';
   if (c === '42501') return 'Keine Berechtigung: Bitte das SQL aus supabase/smartslot.sql in Supabase ausführen.';

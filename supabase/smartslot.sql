@@ -194,3 +194,6 @@ revoke all on function public.poll_mine(text, uuid, uuid) from public;
 grant execute on function public.poll_get(text) to anon, authenticated;
 grant execute on function public.poll_answer(text, text, jsonb, text, uuid, uuid) to anon, authenticated;
 grant execute on function public.poll_mine(text, uuid, uuid) to anon, authenticated;
+
+-- Supabase sofort über die neuen Tabellen und Funktionen informieren
+notify pgrst, 'reload schema';
