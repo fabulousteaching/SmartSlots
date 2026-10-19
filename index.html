@@ -354,7 +354,14 @@ input[type=date],input[type=time]{font:inherit}
 .pstep button + button{border-top:1px solid var(--line-2)}
 .pstep button:hover{background:var(--surface-2);color:var(--ink)}
 .pstep svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.pwd{min-width:6.5em;font-size:.92rem;font-weight:600;color:var(--ink)}
+.pdate{position:relative;display:inline-flex;align-items:center;gap:8px;min-height:40px;min-width:10.8em;padding:0 .65em 0 .75em;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);color:var(--ink);font-size:.95rem;font-weight:500;font-variant-numeric:tabular-nums;cursor:pointer}
+.pdate .pdtxt{flex:1;white-space:nowrap}
+.pdate .pdtxt.empty{color:var(--ink-3)}
+.pdate .pcal{width:16px;height:16px;flex:none;fill:none;stroke:var(--ink-3);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pdate input[type=date]{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;cursor:pointer}
+.pdate:hover{border-color:var(--ink-3)}
+.pdate:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.pmove .pdate{min-height:36px}
 .pend b{display:flex;align-items:center;min-height:40px;min-width:3.2em;font-size:1rem;font-weight:650;color:var(--ink);font-variant-numeric:tabular-nums}
 .ppause{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 12px;font-size:.88rem;font-weight:600;color:var(--ink-2)}
 .ppause .seg{flex-wrap:wrap}
@@ -369,6 +376,10 @@ input[type=date],input[type=time]{font:inherit}
 .pday{border:1px solid var(--line);border-radius:12px;padding:10px 12px 6px;margin:0 0 10px}
 .pday header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;align-items:baseline;margin-bottom:8px}
 .pday h3{font-size:.95rem;font-weight:650}
+.pacts{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.88rem}
+.pday.moving{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.pmove .pstep{height:36px}
+.pmove .btn{min-height:34px}
 .pday .pn{font-size:.82rem;color:var(--ink-3);font-weight:500}
 .ptimes{display:flex;flex-wrap:wrap;gap:6px}
 .ptime{display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:999px;padding:2px 0 2px 10px;font-size:.86rem;font-variant-numeric:tabular-nums;background:var(--surface)}
@@ -506,9 +517,8 @@ input[type=date],input[type=time]{font:inherit}
         <div id="pList"></div>
         <div class="padd">
           <div class="pgrp"><label for="pDate">Datum</label>
-            <div class="pdrow"><input type="date" id="pDate">
-              <span class="pstep"><button type="button" id="pDateUp" aria-label="Nächster Tag" title="Nächster Tag"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 7.5 6 4l3.5 3.5"/></svg></button><button type="button" id="pDateDown" aria-label="Vorheriger Tag" title="Vorheriger Tag"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button></span>
-              <span class="pwd" id="pWd"></span></div></div>
+            <div class="pdrow"><span class="pdate"><span class="pdtxt empty" id="pDateTxt">Datum wählen</span><svg class="pcal" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><input type="date" id="pDate"></span>
+              <span class="pstep"><button type="button" id="pDateUp" aria-label="Nächster Tag" title="Nächster Tag"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 7.5 6 4l3.5 3.5"/></svg></button><button type="button" id="pDateDown" aria-label="Vorheriger Tag" title="Vorheriger Tag"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button></span></div></div>
           <div class="pgrp"><span id="pFromLab">Beginn</span>
             <div class="pdrow ptm" role="group" aria-labelledby="pFromLab"><select id="pH" aria-label="Stunde"></select><b>:</b><select id="pM" aria-label="Minute"></select></div></div>
           <label>Dauer<select id="pLen"></select></label>
@@ -2159,7 +2169,7 @@ function dayText(iso){ return fmt(new Date(iso + 'T12:00:00'), { weekday: 'long'
 function edStart(){
   var P = poll.row, days = {}, all = P ? P.slots.filter(function(x){ return x.date; }) : [];
   all.forEach(function(x){ (days[x.date] = days[x.date] || []).push({ id: x.id, from: x.from, to: x.to }); });
-  poll.ed = { days: days, pause: 0 };
+  poll.ed = { days: days, pause: 0, move: null };
   /* weiter, wo die Umfrage aufhört: gleiche Dauer und Pause wie zuletzt */
   var sorted = edSlots(), lastS = sorted[sorted.length - 1], prev = sorted[sorted.length - 2], len = 20;
   if (lastS){
@@ -2190,8 +2200,17 @@ function edRender(){
   var days = poll.ed.days, keys = Object.keys(days).sort();
   $('#pList').innerHTML = !keys.length ? '<p class="pempty">Noch keine Termine. Datum, Beginn und Dauer wählen, dann «+ Hinzufügen».</p>' : keys.map(function(d){
     var ts = days[d].slice().sort(function(a, b){ return hm(a.from) - hm(b.from); });
-    return '<div class="pday"><header><h3>' + esc(dayText(d)) + ' <span class="pn">' + plural(ts.length, 'Termin', 'Termine') + '</span></h3>' +
-      '<button type="button" class="linkbtn" data-act="pdelday" data-d="' + esc(d) + '">Tag entfernen</button></header><ul class="prows">' + ts.map(function(t, k){
+    var dd = ' data-d="' + esc(d) + '"', moving = poll.ed.move === d;
+    var head = moving
+      ? '<div class="pdrow pmove"><span class="pdate"><span class="pdtxt">' + esc(dateShort(d)) + '</span>' + CAL_ICON + '<input type="date" class="pmd" value="' + esc(d) + '"' + dd + ' aria-label="Neues Datum für diesen Tag"></span>' +
+        '<span class="pstep"><button type="button" data-act="pmup"' + dd + ' aria-label="Nächster freier Tag" title="Nächster freier Tag"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 7.5 6 4l3.5 3.5"/></svg></button>' +
+        '<button type="button" data-act="pmdown"' + dd + ' aria-label="Vorheriger freier Tag" title="Vorheriger freier Tag"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg></button></span>' +
+        '<button type="button" class="btn small" data-act="pmdone"' + dd + '>Fertig</button></div>'
+      : '<h3>' + esc(dayText(d)) + ' <span class="pn">' + plural(ts.length, 'Termin', 'Termine') + '</span></h3>';
+    return '<div class="pday' + (moving ? ' moving' : '') + '"><header>' + head + '<span class="pacts">' +
+      (moving ? '' : '<button type="button" class="linkbtn" data-act="pmove"' + dd + '>Datum ändern</button>') +
+      '<button type="button" class="linkbtn" data-act="pdup"' + dd + '>Duplizieren</button>' +
+      '<button type="button" class="linkbtn" data-act="pdelday"' + dd + '>Tag entfernen</button></span></header><ul class="prows">' + ts.map(function(t, k){
         var gap = k ? hm(t.from) - hm(ts[k - 1].to) : 0;
         return '<li class="prow"><span class="pt">' + esc(t.from + '–' + t.to) + '</span><span class="pl">' + (hm(t.to) - hm(t.from)) + ' Min.' +
           (gap > 0 ? ' <span class="pg">· ' + gap + ' Min. Pause davor</span>' : '') + '</span>' +
@@ -2212,7 +2231,15 @@ function fromGet(){ return $('#pH').value + ':' + $('#pM').value; }
 function fromSet(t){ var n = Math.min(1435, Math.max(0, Math.round(hm(t) / 5) * 5)); if (hm(t) < 0) return; $('#pH').value = hhmm(n).slice(0, 2); $('#pM').value = hhmm(n).slice(3); }
 function edEnd(){ var a = hm(fromGet()), len = +$('#pLen').value; $('#pEnd').textContent = a >= 0 && a + len <= 1440 ? hhmm(a + len) : '–'; }
 /* Wochentag zum Datum, Pfeile für den nächsten und vorherigen Tag */
-function edDay(){ var d = $('#pDate').value; $('#pWd').textContent = /^\d{4}-\d{2}-\d{2}$/.test(d) ? fmt(new Date(d + 'T12:00:00'), { weekday: 'long' }) : ''; }
+/* Datum mit Wochentag in einem Feld, z. B. «Do, 15.10.2026»; ein Klick öffnet den Kalender */
+var WDS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+var CAL_ICON = '<svg class="pcal" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+function dateShort(iso){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? WDS[new Date(+m[1], +m[2] - 1, +m[3]).getDay()] + ', ' + m[3] + '.' + m[2] + '.' + m[1] : ''; }
+function edDay(){ var t = dateShort($('#pDate').value), el = $('#pDateTxt'); el.textContent = t || 'Datum wählen'; el.classList.toggle('empty', !t); }
+document.addEventListener('click', function(e){
+  var inp = e.target.closest('.pdate input[type=date]');
+  if (inp && inp.showPicker) try { inp.showPicker(); } catch (x){}
+});
 function isoDay(x){ return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2); }
 function stepDay(n){
   var d = $('#pDate').value, x = /^\d{4}-\d{2}-\d{2}$/.test(d) ? new Date(d + 'T12:00:00') : new Date();
@@ -2259,13 +2286,53 @@ $('#pAdd').addEventListener('click', function(){
   fromSet(hhmm(Math.min(b + poll.ed.pause, 1435)));
   edEnd();
 });
+/* Tag duplizieren oder verschieben: immer auf einen Tag ohne Termine.
+   Verschobene Termine bekommen neue Kennungen, damit Zusagen nicht still für ein anderes Datum gelten. */
+function shiftDay(d, n){ var x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() + n); return isoDay(x); }
+function freeDay(d, dir){ for (var k = 1; k < 400; k++){ var t = shiftDay(d, dir * k); if (!poll.ed.days[t]) return t; } return ''; }
+function copyTimes(list){ return list.map(function(t){ return { id: rid(), from: t.from, to: t.to }; }); }
+function edMove(from, to){
+  var days = poll.ed.days;
+  if (!to || to === from) return;
+  if (days[to]) return note($('#pMsg'), txt('err', 'Am ' + dayText(to) + ' gibt es schon Termine. Bitte einen anderen Tag wählen.'));
+  days[to] = copyTimes(days[from]); delete days[from];
+  if ($('#pDate').value === from){ $('#pDate').value = to; edDay(); }
+  poll.ed.move = to;
+  note($('#pMsg'), null);
+  edRender();
+  var inp = $('#pList .pmd'); if (inp) inp.focus();
+}
 $('#pList').addEventListener('click', function(e){
   var b = e.target.closest('button[data-act]');
   if (!b) return;
-  var days = poll.ed.days, d = b.dataset.d;
-  if (b.dataset.act === 'pdelday') delete days[d];
+  var days = poll.ed.days, d = b.dataset.d, act = b.dataset.act;
+  if (act === 'pmove'){ poll.ed.move = d; note($('#pMsg'), null); edRender(); var inp = $('#pList .pmd'); if (inp) inp.focus(); return; }
+  if (act === 'pmdone'){ poll.ed.move = null; edRender(); return; }
+  if (act === 'pmup' || act === 'pmdown'){ edMove(d, freeDay(d, act === 'pmup' ? 1 : -1)); return; }
+  if (act === 'pdup'){
+    var to = freeDay(d, 1);
+    if (edSlots().length + days[d].length > 300) return note($('#pMsg'), txt('err', 'Höchstens 300 Termine pro Umfrage.'));
+    days[to] = copyTimes(days[d]);
+    poll.ed.move = to;
+    note($('#pMsg'), txt('ok', 'Kopiert auf ' + dayText(to) + '. Das Datum kannst du direkt ändern.'));
+    edRender();
+    var inp2 = $('#pList .pmd'); if (inp2) inp2.focus();
+    return;
+  }
+  if (act === 'pdelday'){ delete days[d]; if (poll.ed.move === d) poll.ed.move = null; }
   else { days[d] = days[d].filter(function(t){ return t.id !== b.dataset.id; }); if (!days[d].length) delete days[d]; }
   edRender();
+});
+$('#pList').addEventListener('change', function(e){
+  var inp = e.target.closest('.pmd');
+  if (!inp) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(inp.value)){ inp.value = inp.dataset.d; return; }
+  if (poll.ed.days[inp.value] && inp.value !== inp.dataset.d){ edMove(inp.dataset.d, inp.value); inp.value = inp.dataset.d; return; }
+  edMove(inp.dataset.d, inp.value);
+});
+/* Enter im Datumsfeld eines Tages: fertig (nicht die Umfrage speichern) */
+$('#pList').addEventListener('keydown', function(e){
+  if (e.key === 'Enter' && e.target.closest('.pmd')){ e.preventDefault(); poll.ed.move = null; edRender(); }
 });
 $('#pCancel').addEventListener('click', function(){ poll.editing = false; poll.ed = null; renderSource(); });
 $('#pollForm').addEventListener('submit', async function(e){
