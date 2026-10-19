@@ -912,7 +912,7 @@ function setData(d, info){
   var s = { title: d.title || '', source: info.source || '', loaded: Date.now(),
     cap: old ? old.cap : 1, useMaybe: old ? old.useMaybe : true, showFree: old ? old.showFree : false, mode: old && old.mode || 'kompakt', nextId: 1, slots: [], people: [], pins: {} };
   d.slots.forEach(function(x){ s.slots.push({ id: s.nextId++, day: x.day || '', time: x.time || '', on: true }); });
-  d.people.forEach(function(x){ var p = { id: s.nextId++, name: x.name, orig: x.key || x.name, on: true, ans: x.ans.slice() }; if (x.resp) p.resp = x.resp; s.people.push(p); });
+  d.people.forEach(function(x){ var p = { id: s.nextId++, name: x.name, from: x.name, orig: x.key || x.name, on: true, ans: x.ans.slice() }; if (x.resp) p.resp = x.resp; s.people.push(p); });
   normalizeDays(s.slots);
   /* Bei einer eigenen Umfrage (keep) bleibt immer alles, was von Hand gemacht wurde */
   if (old && (info.keep || samePoll(old, s))){ carryOver(old, s); normalizeDays(s.slots); tidyGroups(s); }
@@ -946,7 +946,10 @@ function carryOver(old, s){
   old.people.forEach(function(op){
     var i = who[pkey(op)], np = i != null ? s.people[i] : null;
     if (np){
-      np.on = op.on; np.name = op.name;
+      np.on = op.on;
+      /* Einen von Hand geänderten Namen behalten, ausser die Familie hat ihren Namen inzwischen selbst geändert */
+      var src = op.from != null ? op.from : op.orig;
+      if (op.name !== src && np.from === src) np.name = op.name;
       if (op.group) np.group = op.group;
       if (op.hard) np.hard = true;
       old.slots.forEach(function(x, j){ if (x.manual && map[j] >= 0) np.ans[map[j]] = op.ans[j]; });
