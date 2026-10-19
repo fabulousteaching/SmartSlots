@@ -1587,7 +1587,7 @@ function demoData(){
    Die Datenbank zählt «version» bei jeder Änderung hoch. Hat inzwischen ein anderes Fenster gespeichert, wird nichts
    überschrieben, sondern nachgefragt. */
 var acct = { on: false, client: null, user: null, guest: false, carry: null, recovery: false, view: '', mode: 'in',
-  slot: null, dirty: false, saving: null, timer: 0, retry: 0, problem: '', errText: '', list: null, notice: null, nav: 0, busy: false, mail: '', out: false, toast: '', manual: false, polls: {} };
+  slot: null, dirty: false, saving: null, timer: 0, retry: 0, problem: '', errText: '', list: null, notice: null, nav: 0, busy: false, mail: '', out: false, toast: '', manual: false, polls: {}, draft0: null };
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 var SAVE_DELAY = 700;
 var ICON_SLOT = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h3"/></svg>';
@@ -1806,6 +1806,7 @@ function slotMeta(x){
   var m = x.meta || {}, parts = [], fam = +m.families || 0, miss = +m.missing || 0, pl = acct.polls[x.id];
   if (pl) parts.push('<span class="pbadge' + (pl.open ? '' : ' closed') + '">Umfrage ' + (pl.open ? 'offen' : 'geschlossen') + ' · ' + plural(pl.n, 'Antwort', 'Antworten') + '</span>');
   if (fam) parts.push(plural(fam, 'Familie', 'Familien'), miss ? '<span class="warn">' + miss + ' ohne Termin</span>' : 'alle mit Termin');
+  else if (!pl && m.draft) parts.push('<span class="pbadge closed">Umfrage im Entwurf</span>');
   else if (!pl) parts.push('noch keine Antworten');
   var w = when(x.updated_at);
   if (w) parts.push('geändert ' + esc(w));
@@ -1927,12 +1928,13 @@ async function openSlot(id){
     return showList(txt('err', r.error ? 'Der SmartSlot konnte nicht geöffnet werden. ' + dbText(r.error) : 'Diesen SmartSlot gibt es nicht (mehr).'));
   }
   var row = r.data[0], saved = row.data && row.data.state;
+  acct.draft0 = row.data && row.data.draft || null;
   acct.slot = { id: row.id, name: row.name, version: row.version };
   acct.dirty = false; acct.problem = '';
   state = restore(saved); last = null;
   setStatus('', ''); hardMsg(''); $('#hardBox').open = false;
   if (saved && !state) setStatus('err', '<p>Die gespeicherten Antworten konnten nicht gelesen werden. Bitte die Datei nochmals einlesen.</p>');
-  pollReset();
+  pollReset(); poll.loading = true;
   showView('work');
   $('#slotName').value = row.name;
   renderAll(); saveUI();
@@ -1955,8 +1957,10 @@ async function leaveSlot(){
 }
 function isStuck(){ return acct.problem === 'conflict' || acct.problem === 'gone' || (acct.problem === 'error' && !acct.saving); }
 function pack(st){
-  var r = st ? solve(st) : null;
-  return { v: 1, meta: st ? { families: r.nOn, missing: r.missing.length, days: r.nDays, file: st.source || '', poll: poll.row ? { open: poll.row.open, n: poll.resp.length } : null } : null, state: st };
+  var r = st ? solve(st) : null, dr = edDraft();
+  var meta = st ? { families: r.nOn, missing: r.missing.length, days: r.nDays, file: st.source || '', poll: poll.row ? { open: poll.row.open, n: poll.resp.length } : null } : null;
+  if (dr) meta = Object.assign(meta || {}, { draft: true });
+  return { v: 1, meta: meta, state: st, draft: dr };
 }
 function save(){
   if (!acct.slot || acct.problem === 'conflict' || acct.problem === 'gone') return;
@@ -2171,22 +2175,45 @@ function edStart(){
   all.forEach(function(x){ (days[x.date] = days[x.date] || []).push({ id: x.id, from: x.from, to: x.to }); });
   poll.ed = { days: days, pause: 0, move: null };
   /* weiter, wo die Umfrage aufhört: gleiche Dauer und Pause wie zuletzt */
-  var sorted = edSlots(), lastS = sorted[sorted.length - 1], prev = sorted[sorted.length - 2], len = 20;
+  var sorted = edSlots(), lastS = sorted[sorted.length - 1], prev = sorted[sorted.length - 2], len = 20, pause = 0;
   if (lastS){
     len = Math.min(180, Math.max(5, Math.round((hm(lastS.to) - hm(lastS.from)) / 5) * 5));
-    if (prev && prev.date === lastS.date){ var g = hm(lastS.from) - hm(prev.to); if (g >= 0 && g <= 30 && g % 5 === 0) poll.ed.pause = g; }
+    if (prev && prev.date === lastS.date){ var g = hm(lastS.from) - hm(prev.to); if (g >= 0 && g <= 30 && g % 5 === 0) pause = g; }
   }
-  $('#pTitle').value = P ? P.title : acct.slot ? acct.slot.name : '';
-  $('#pIntro').value = P ? P.intro : '';
-  $('#pMaybe').checked = P ? P.allow_maybe : true;
+  edLoad({ title: P ? P.title : acct.slot ? acct.slot.name : '', intro: P ? P.intro : '', maybe: P ? P.allow_maybe : true, days: days, pause: pause,
+    entry: { date: lastS ? lastS.date : '', from: lastS ? hhmm(hm(lastS.to) + pause) : '16:00', len: len } });
+}
+/* Formular füllen, aus der Umfrage oder aus einem gespeicherten Entwurf */
+function edLoad(o){
+  var P = poll.row, e = o.entry || {};
+  poll.ed = { days: cleanDays(o.days), pause: [0, 5, 10, 15, 20, 30].indexOf(+o.pause) >= 0 ? +o.pause : 0, move: null, touched: !!o.touched };
+  $('#pTitle').value = String(o.title || '').slice(0, 200);
+  $('#pIntro').value = String(o.intro || '').slice(0, 2000);
+  $('#pMaybe').checked = o.maybe !== false;
   $('#pSave').textContent = P ? 'Änderungen speichern' : 'Umfrage erstellen';
   $('#pCancel').hidden = !P;
-  $('#pDate').value = lastS ? lastS.date : '';
-  fromSet(lastS ? hhmm(hm(lastS.to) + poll.ed.pause) : '16:00');
-  $('#pLen').value = String(len);
+  $('#pDate').value = /^\d{4}-\d{2}-\d{2}$/.test(e.date || '') ? e.date : '';
+  fromSet(hm(e.from) >= 0 ? e.from : '16:00');
+  $('#pLen').value = String(+e.len >= 5 && +e.len <= 180 && +e.len % 5 === 0 ? +e.len : 20);
   note($('#pMsg'), null);
   edPause(); edDay(); edEnd(); edRender();
 }
+function cleanDays(days){
+  var out = {};
+  Object.keys(days || {}).forEach(function(d){
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !Array.isArray(days[d])) return;
+    var list = days[d].filter(function(t){ return t && hm(t.from) >= 0 && hm(t.to) > hm(t.from); }).map(function(t){ return { id: String(t.id || rid()).slice(0, 20), from: hhmm(hm(t.from)), to: hhmm(hm(t.to)) }; });
+    if (list.length) out[d] = list;
+  });
+  return out;
+}
+/* Entwurf: wird mit dem SmartSlot gespeichert, solange die Umfrage noch nicht erstellt oder gespeichert ist */
+function edCollect(){
+  return { pollId: poll.row ? poll.row.id : null, title: $('#pTitle').value, intro: $('#pIntro').value, maybe: $('#pMaybe').checked,
+    days: poll.ed.days, pause: poll.ed.pause, entry: { date: $('#pDate').value, from: fromGet(), len: +$('#pLen').value } };
+}
+function edDraft(){ return acct.slot && poll.ed && poll.ed.touched && (!poll.row || poll.editing) ? edCollect() : null; }
+function edDirty(){ if (!acct.slot || !poll.ed) return; poll.ed.touched = true; save(); }
 function edSlots(){
   var days = poll.ed.days, out = [];
   Object.keys(days).sort().forEach(function(d){
@@ -2245,8 +2272,10 @@ function stepDay(n){
   var d = $('#pDate').value, x = /^\d{4}-\d{2}-\d{2}$/.test(d) ? new Date(d + 'T12:00:00') : new Date();
   if (/^\d{4}-\d{2}-\d{2}$/.test(d)) x.setDate(x.getDate() + n);
   $('#pDate').value = isoDay(x);
-  edNext();
+  edNext(); edDirty();
 }
+$('#pollForm').addEventListener('input', edDirty);
+$('#pollForm').addEventListener('change', edDirty);
 $('#pDateUp').addEventListener('click', function(){ stepDay(1); });
 $('#pDateDown').addEventListener('click', function(){ stepDay(-1); });
 function edPause(){ [].forEach.call(document.querySelectorAll('#pPause button'), function(b){ b.setAttribute('aria-pressed', String(+b.dataset.p === poll.ed.pause)); }); }
@@ -2266,7 +2295,7 @@ $('#pPause').addEventListener('click', function(e){
   var b = e.target.closest('button[data-p]');
   if (!b) return;
   poll.ed.pause = +b.dataset.p;
-  edPause(); edNext();
+  edPause(); edNext(); edDirty();
 });
 /* Enter in der Zeile fügt hinzu (statt die ganze Umfrage zu speichern) */
 document.querySelector('.padd').addEventListener('keydown', function(e){
@@ -2284,7 +2313,7 @@ $('#pAdd').addEventListener('click', function(){
   note($('#pMsg'), null);
   edRender();
   fromSet(hhmm(Math.min(b + poll.ed.pause, 1435)));
-  edEnd();
+  edEnd(); edDirty();
 });
 /* Tag duplizieren oder verschieben: immer auf einen Tag ohne Termine.
    Verschobene Termine bekommen neue Kennungen, damit Zusagen nicht still für ein anderes Datum gelten. */
@@ -2299,7 +2328,7 @@ function edMove(from, to){
   if ($('#pDate').value === from){ $('#pDate').value = to; edDay(); }
   poll.ed.move = to;
   note($('#pMsg'), null);
-  edRender();
+  edRender(); edDirty();
   var inp = $('#pList .pmd'); if (inp) inp.focus();
 }
 $('#pList').addEventListener('click', function(e){
@@ -2315,13 +2344,13 @@ $('#pList').addEventListener('click', function(e){
     days[to] = copyTimes(days[d]);
     poll.ed.move = to;
     note($('#pMsg'), txt('ok', 'Kopiert auf ' + dayText(to) + '. Das Datum kannst du direkt ändern.'));
-    edRender();
+    edRender(); edDirty();
     var inp2 = $('#pList .pmd'); if (inp2) inp2.focus();
     return;
   }
   if (act === 'pdelday'){ delete days[d]; if (poll.ed.move === d) poll.ed.move = null; }
   else { days[d] = days[d].filter(function(t){ return t.id !== b.dataset.id; }); if (!days[d].length) delete days[d]; }
-  edRender();
+  edRender(); edDirty();
 });
 $('#pList').addEventListener('change', function(e){
   var inp = e.target.closest('.pmd');
@@ -2334,7 +2363,7 @@ $('#pList').addEventListener('change', function(e){
 $('#pList').addEventListener('keydown', function(e){
   if (e.key === 'Enter' && e.target.closest('.pmd')){ e.preventDefault(); poll.ed.move = null; edRender(); }
 });
-$('#pCancel').addEventListener('click', function(){ poll.editing = false; poll.ed = null; renderSource(); });
+$('#pCancel').addEventListener('click', function(){ poll.editing = false; poll.ed = null; renderSource(); save(); });
 $('#pollForm').addEventListener('submit', async function(e){
   e.preventDefault();
   var sl = acct.slot, P = poll.row, slots = edSlots(), title = clean($('#pTitle').value).slice(0, 200) || sl.name;
@@ -2353,7 +2382,7 @@ $('#pollForm').addEventListener('submit', async function(e){
   btn.disabled = false;
   if (acct.slot !== sl) return;
   if (r.error || !r.data || !r.data.length) return note($('#pMsg'), txt('err', 'Die Umfrage konnte nicht gespeichert werden. ' + (r.error ? dbText(r.error) : '')));
-  poll.row = r.data[0]; poll.editing = false; poll.ed = null;
+  poll.row = r.data[0]; poll.editing = false; poll.ed = null; save();
   if (!P){ poll.resp = []; poll.at = Date.now(); applyPoll(); }
   else await refreshPoll(true);
   renderSource(); renderPollView();
@@ -2444,6 +2473,13 @@ async function pollLoad(sl){
   poll.loading = false;
   if (r.error){ poll.err = dbText(r.error); renderSource(); return; }
   poll.row = r.data && r.data[0] || null;
+  /* Entwurf von vorhin: beim Erstellen, oder ungespeicherte Änderungen an dieser Umfrage */
+  var dr = acct.draft0; acct.draft0 = null;
+  if (dr && typeof dr === 'object' && (dr.pollId || null) === (poll.row ? poll.row.id : null)){
+    poll.src = 'poll'; poll.editing = !!poll.row;
+    edLoad(Object.assign({}, dr, { touched: true }));
+    if (poll.row) note($('#pMsg'), txt('', 'Deine Änderungen von vorhin sind noch nicht gespeichert: «Änderungen speichern» übernimmt sie, «Abbrechen» verwirft sie.'));
+  }
   renderSource();
   if (poll.row){ await refreshPoll(true); pollTick(); }
 }
