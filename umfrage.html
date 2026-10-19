@@ -119,13 +119,13 @@ input[type=text]:focus,textarea:focus{outline:none;border-color:var(--accent);bo
   <h1 id="title"></h1>
   <p class="intro" id="intro" hidden></p>
   <div class="msg" id="again" hidden>Sie haben schon geantwortet. Hier können Sie Ihre Antwort ändern.</div>
-  <label class="fld"><span>Ihr Name</span><input type="text" id="name" maxlength="120" autocomplete="name" placeholder="z. B. Lea Meier (Mutter von Tim)"></label>
+  <label class="fld"><span>Nachname</span><input type="text" id="name" maxlength="120" autocomplete="family-name" placeholder="z. B. Meier"></label>
   <p class="how" id="how">Bitte geben Sie bei jedem Termin an, ob er für Sie passt.</p>
   <div id="days"></div>
-  <label class="fld"><span>Bemerkung <i>(freiwillig)</i></span><textarea id="comment" maxlength="1000" rows="3" placeholder="z. B. Geschwister in einer anderen Klasse, oder: Wir kommen zu zweit"></textarea></label>
+  <label class="fld"><span>Bemerkung <i>(freiwillig)</i></span><textarea id="comment" maxlength="1000" rows="3"></textarea></label>
   <div class="msg err" id="msg" role="alert" hidden></div>
   <button class="btn primary wide" type="submit" id="send">Antwort senden</button>
-  <p class="privacy">Ihre Antwort sieht nur die Lehrperson, nicht die anderen Eltern.</p>
+  <p class="privacy">Ihre Antwort sieht nur der Administrator, nicht die anderen Teilnehmenden.</p>
 </form>
 
 <section class="card" id="done" hidden>
@@ -157,8 +157,8 @@ function errText(e){
   var m = e && (e.message || e.details) || String(e);
   if (/poll_closed/.test(m)) return 'Diese Umfrage ist inzwischen geschlossen. Antworten sind nicht mehr möglich.';
   if (/poll_not_found/.test(m)) return 'Diese Umfrage gibt es nicht mehr.';
-  if (/bad_name/.test(m)) return 'Bitte geben Sie Ihren Namen ein.';
-  if (/too_many/.test(m)) return 'Es sind bereits sehr viele Antworten eingegangen. Bitte melden Sie sich direkt bei der Lehrperson.';
+  if (/bad_name/.test(m)) return 'Bitte geben Sie Ihren Nachnamen ein.';
+  if (/too_many/.test(m)) return 'Es sind bereits sehr viele Antworten eingegangen. Bitte melden Sie sich direkt beim Administrator.';
   if (/failed to fetch|networkerror|load failed|network request failed/i.test(m)) return 'Keine Verbindung. Bitte prüfen Sie die Internetverbindung und versuchen Sie es nochmals.';
   return 'Das hat leider nicht geklappt. Bitte versuchen Sie es nochmals. (' + m + ')';
 }
@@ -173,7 +173,7 @@ function loadScript(url, sri){
   });
 }
 
-/* Termine nach Tagen, wie von der Lehrperson angelegt */
+/* Termine nach Tagen, wie vom Administrator angelegt */
 function groups(){
   var out = [];
   poll.slots.forEach(function(s){
@@ -187,7 +187,7 @@ function render(){
   $('#title').textContent = poll.title || 'Terminumfrage';
   $('#intro').textContent = poll.intro || '';
   $('#intro').hidden = !poll.intro;
-  $('#how').textContent = poll.allow_maybe ? 'Bitte geben Sie bei jedem Termin an, ob er für Sie passt. «Wenn nötig» heisst: Es geht, wenn es sonst nicht aufgeht.' : 'Bitte geben Sie bei jedem Termin an, ob er für Sie passt.';
+  $('#how').textContent = poll.allow_maybe ? 'Bitte geben Sie bei jedem Termin an, ob er für Sie passt. «Wenn nötig» heisst: Termin ist machbar, aber nicht erste Wahl.' : 'Bitte geben Sie bei jedem Termin an, ob er für Sie passt.';
   var ans = mine && mine.answers || {};
   $('#days').innerHTML = groups().map(function(g, k){
     return '<fieldset class="day"><legend><span>' + esc(g.day || 'Termine') + '</span><button type="button" class="allyes" data-g="' + k + '">alle Ja</button></legend>' + g.slots.map(function(s){
@@ -213,7 +213,7 @@ function summary(a){
   var yes = [], maybe = [];
   poll.slots.forEach(function(s){ var t = (s.day ? s.day + ', ' : '') + s.time; if (a[s.id] === 2) yes.push(t); else if (a[s.id] === 1) maybe.push(t); });
   $('#sum').innerHTML = yes.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + maybe.map(function(t){ return '<li>' + esc(t) + ' <span class="m">(wenn nötig)</span></li>'; }).join('');
-  $('#doneText').textContent = yes.length || maybe.length ? 'Ihre Antwort ist gespeichert. Die Lehrperson teilt Ihnen einen dieser Termine zu:' : 'Ihre Antwort ist gespeichert. Sie haben keinen Termin als passend markiert; die Lehrperson meldet sich bei Ihnen.';
+  $('#doneText').textContent = yes.length || maybe.length ? 'Ihre Antwort ist gespeichert. Der Administrator teilt Ihnen einen dieser Termine zu:' : 'Ihre Antwort ist gespeichert. Sie haben keinen Termin als passend markiert; der Administrator meldet sich bei Ihnen.';
 }
 
 $('#days').addEventListener('click', function(e){
@@ -225,7 +225,7 @@ $('#form').addEventListener('submit', async function(e){
   e.preventDefault();
   var name = clean($('#name').value), a = answers(), msg = $('#msg');
   msg.hidden = true;
-  if (!name){ msg.textContent = 'Bitte geben Sie Ihren Namen ein.'; msg.hidden = false; $('#name').focus(); return; }
+  if (!name){ msg.textContent = 'Bitte geben Sie Ihren Nachnamen ein.'; msg.hidden = false; $('#name').focus(); return; }
   if (!Object.keys(a).some(function(k){ return a[k] > 0; }) && !confirm('Sie haben keinen Termin als passend markiert. Trotzdem senden?')) return;
   var me = stored(), btn = $('#send');
   btn.disabled = true;
@@ -249,7 +249,7 @@ async function start(){
   } catch (e){ return fail('Keine Verbindung', errText(e)); }
   var r = await client.rpc('poll_get', { p_token: token });
   if (r.error) return fail('Keine Verbindung', errText(r.error));
-  if (!r.data) return fail('Umfrage nicht gefunden', 'Diese Umfrage gibt es nicht (mehr). Bitte fragen Sie bei der Lehrperson nach.');
+  if (!r.data) return fail('Umfrage nicht gefunden', 'Diese Umfrage gibt es nicht (mehr). Bitte fragen Sie beim Administrator nach.');
   poll = r.data;
   poll.slots = Array.isArray(poll.slots) ? poll.slots : [];
   var me = stored();
