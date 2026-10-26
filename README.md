@@ -12,7 +12,7 @@ Bei einer eigenen Umfrage erscheint jede neue Antwort automatisch, und die Verte
 
 Mit Konto (Supabase) werden die SmartSlots gespeichert, sodass man jederzeit weiterarbeiten kann. Ohne Konto wird nichts gespeichert.
 
-**Online:** https://fabulousteaching.github.io/SmartSlots/
+**Online:** https://www.smartslots.ch
 
 ## Aufbau
 

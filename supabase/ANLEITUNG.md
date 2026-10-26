@@ -25,8 +25,8 @@ Das SQL legt die Tabellen an (`smartslots` sowie `polls` und `poll_responses` f�
 
 **Authentication → URL Configuration**
 
-- **Site URL:** `https://fabulousteaching.github.io/SmartSlots/`
-- **Redirect URLs:** `https://fabulousteaching.github.io/SmartSlots/**` hinzufügen.
+- **Site URL:** `https://www.smartslots.ch/`
+- **Redirect URLs:** `https://www.smartslots.ch/**` hinzufügen. Die alte Adresse `https://fabulousteaching.github.io/SmartSlots/**` darf in der Liste bleiben.
 
 Dorthin führen die Links in den E-Mails (Konto bestätigen, Passwort vergessen).
 
@@ -61,6 +61,33 @@ Den **secret** bzw. **service_role** Schlüssel nie eintragen und nie weitergebe
 
 Auf GitHub beim Repository **Settings → Pages** öffnen, bei **Source** «Deploy from a branch» wählen, dann **main** und **/ (root)**, und speichern.
 Nach ein bis zwei Minuten läuft SmartSlots unter `https://fabulousteaching.github.io/SmartSlots/`.
+
+### Eigene Domain (www.smartslots.ch, bei Infomaniak)
+
+Reihenfolge einhalten: zuerst DNS, dann GitHub.
+
+1. **Infomaniak-Manager → Domain smartslots.ch → DNS-Zone.**
+   Bestehende **A**- und **AAAA**-Einträge für `smartslots.ch` (Name leer bzw. `@`) und alle Einträge für `www` löschen.
+   **MX**- und **TXT**-Einträge (E-Mail) nicht anfassen.
+2. Neu eintragen:
+
+   | Typ | Name | Ziel |
+   | --- | --- | --- |
+   | CNAME | `www` | `fabulousteaching.github.io` |
+   | A | *(leer)* | `185.199.108.153` |
+   | A | *(leer)* | `185.199.109.153` |
+   | A | *(leer)* | `185.199.110.153` |
+   | A | *(leer)* | `185.199.111.153` |
+   | AAAA | *(leer)* | `2606:50c0:8000::153` |
+   | AAAA | *(leer)* | `2606:50c0:8001::153` |
+   | AAAA | *(leer)* | `2606:50c0:8002::153` |
+   | AAAA | *(leer)* | `2606:50c0:8003::153` |
+
+3. **GitHub → Repository SmartSlots → Settings → Pages → Custom domain:** `www.smartslots.ch` eintragen und **Save**. GitHub prüft die DNS-Einträge; das kann von ein paar Minuten bis einige Stunden dauern.
+4. Sobald es geht, **Enforce HTTPS** anhaken.
+5. In Supabase die Adresse unter **Authentication → URL Configuration** anpassen (siehe Schritt 3 oben).
+
+Danach läuft SmartSlots unter `https://www.smartslots.ch`. `smartslots.ch` und die alte Adresse `fabulousteaching.github.io/SmartSlots/` leiten automatisch dorthin weiter, auch bereits verschickte Umfrage-Links.
 Nach einer Änderung kann es ein paar Minuten dauern, bis GitHub Pages die neue Version zeigt.
 
 Vorschau-Adressen wie raw.githack.com nur zum Ausprobieren verwenden: Dort teilen sich viele fremde Seiten dieselbe Adresse, und die Anmeldung wäre weniger geschützt.
