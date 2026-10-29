@@ -11,6 +11,8 @@
 
 Bei einer eigenen Umfrage erscheint jede neue Antwort automatisch, und die Verteilung passt sich an.
 
+**Wochenplan (Stundenplan):** Für wiederkehrende Lektionen, z. B. Logopädie oder andere Förderlektionen. Die Planende legt Wochentage und Lektionen fest und sperrt, was ihr nicht passt. Die Lehrpersonen geben über den Link an, welche Lektionen passen (passt / wenn's sein muss / passt nicht) und wie viele ihre Klasse braucht. SmartSlots erstellt daraus den Plan; Lektionen verschiedener Klassen lassen sich per Drag & Drop zusammenlegen.
+
 Mit Konto (Supabase) werden die SmartSlots gespeichert, sodass man jederzeit weiterarbeiten kann. Ohne Konto wird nichts gespeichert.
 
 **Online:** https://www.smartslots.ch

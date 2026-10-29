@@ -97,5 +97,6 @@ Vorschau-Adressen wie raw.githack.com nur zum Ausprobieren verwenden: Dort teile
 - **Pause bei Gratis-Projekten:** Supabase pausiert Gratis-Projekte nach etwa 7 Tagen ohne Nutzung. Die Daten bleiben erhalten. Beim Projekt in Supabase **Restore** klicken, dann geht es nach ein paar Minuten weiter. Während der Pause meldet SmartSlots «Keine Verbindung zum Server». Am besten vor den Elterngesprächen kurz prüfen. Bezahlte Projekte werden nicht pausiert.
 - **Datenschutz:** In den SmartSlots stehen Namen von Familien und ihre Antworten. Viele Schulen haben Regeln, wo solche Daten liegen dürfen. Im Zweifel bei der Schulleitung nachfragen.
 - **Eigene Umfragen** gibt es nur mit Konto. Die Eltern brauchen kein Konto: Sie öffnen den Link (`umfrage.html?t=…`), tragen ihren Namen ein und wählen bei jedem Termin Ja, Wenn nötig oder Nein. Wer den Link hat, kann antworten. Darum den Link nur den Eltern schicken und die Umfrage schliessen, wenn alle geantwortet haben.
+- **Wochenplan (Stundenplan):** Beim Erstellen der Umfrage «Wochenplan» wählen. Die Teilnehmenden (z. B. Lehrpersonen) geben pro Lektion «passt», «wenn's sein muss» oder «passt nicht» an und wie viele Lektionen sie brauchen.
 - **Ohne Konto ausprobieren** bleibt möglich, mit einer CSV- oder Excel-Datei. Dann wird nichts gespeichert.
 - **Abmelden** meldet nur diesen Browser ab.

@@ -402,6 +402,17 @@ input[type=date],input[type=time]{font:inherit}
 .ptime{display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:999px;padding:2px 0 2px 10px;font-size:.86rem;font-variant-numeric:tabular-nums;background:var(--surface)}
 .pempty{margin:0 0 12px;color:var(--ink-3);font-size:.9rem}
 .pbtns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.pollform .seg{flex-wrap:wrap;align-self:flex-start}
+.pollform .seg button{min-height:34px;padding:.35em .85em}
+.wlab{display:block;margin:14px 0 6px;font-size:.88rem;font-weight:600;color:var(--ink-2)}
+.wper{margin:0 0 10px;border:1px solid var(--line);border-radius:12px;padding:4px 12px}
+.wper .pempty{padding:8px 0;margin:0}
+.wgrid{border-collapse:separate;border-spacing:4px;margin:0 -4px}
+.wgrid thead th{font-size:.8rem;font-weight:650;color:var(--ink-2);text-align:center;min-width:46px}
+.wgrid th.wt{font-size:.72rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.25;color:var(--ink-3);text-align:right;padding-right:4px}
+.wa{width:100%;min-width:46px;height:38px;border:1px solid var(--good-line);border-radius:9px;background:var(--good-bg);color:var(--good);font-weight:700;cursor:pointer}
+.wa.off{border-color:var(--line-2);color:var(--ink-3);background:repeating-linear-gradient(135deg,transparent 0 6px,var(--surface-3) 6px 12px)}
+#wAvail{overflow-x:auto}
 .pstate{font-size:.93rem;color:var(--ink-2)}
 .pstate b{color:var(--ink)}
 .pdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--good);margin-right:7px;vertical-align:1px}
@@ -523,10 +534,14 @@ input[type=date],input[type=time]{font:inherit}
   <div id="srcPoll" hidden>
     <div class="amsg" id="pollGuest" hidden><p>Eigene Umfragen gibt es mit einem Konto: Termine vorschlagen, den Link an die Eltern schicken, und jede Antwort erscheint hier automatisch.</p><p><button type="button" class="btn small primary" id="pollLoginBtn">Anmelden oder Konto erstellen</button></p></div>
     <form class="pollform" id="pollForm" novalidate hidden>
-      <label class="fld"><span>Titel für die Eltern</span><input type="text" id="pTitle" maxlength="200" autocomplete="off"></label>
+      <div class="fld" id="pKindRow"><span id="pKindLab">Art der Umfrage</span>
+        <div class="seg" id="pKind" role="group" aria-labelledby="pKindLab"><button type="button" data-k="dates" aria-pressed="true">Termine an Tagen</button><button type="button" data-k="week" aria-pressed="false">Wochenplan (Stundenplan)</button></div>
+        <p class="hint" id="pKindHint">Termine an bestimmten Tagen, z. B. für Elterngespräche.</p>
+      </div>
+      <label class="fld"><span>Titel</span><input type="text" id="pTitle" maxlength="200" autocomplete="off"></label>
       <label class="fld"><span>Ort</span><input type="text" id="pPlace" maxlength="200" autocomplete="off" placeholder="z. B. Schulzimmer 12, Schulhaus Mattenhof"></label>
-      <label class="fld"><span>Nachricht an die Eltern <i>(freiwillig)</i></span><textarea id="pIntro" rows="3" maxlength="2000" placeholder="z. B. Bitte geben Sie an, welche Zeiten für Sie passen. Ein Gespräch dauert 20 Minuten."></textarea></label>
-      <div class="fld"><span>Termine</span>
+      <label class="fld"><span>Nachricht an die Teilnehmenden <i>(freiwillig)</i></span><textarea id="pIntro" rows="3" maxlength="2000" placeholder="z. B. Bitte geben Sie an, welche Zeiten für Sie passen. Ein Gespräch dauert 20 Minuten."></textarea></label>
+      <div class="fld" id="pDates"><span>Termine</span>
         <div class="ppause"><span id="pPauseLab">Pause zwischen den Gesprächen</span>
           <div class="seg" id="pPause" role="group" aria-labelledby="pPauseLab">
             <button type="button" data-p="0" aria-pressed="true">keine</button><button type="button" data-p="5" aria-pressed="false">5 Min.</button><button type="button" data-p="10" aria-pressed="false">10 Min.</button><button type="button" data-p="15" aria-pressed="false">15 Min.</button><button type="button" data-p="20" aria-pressed="false">20 Min.</button><button type="button" data-p="30" aria-pressed="false">30 Min.</button>
@@ -545,7 +560,25 @@ input[type=date],input[type=time]{font:inherit}
         </div>
         <p class="hint">Nach «Hinzufügen» steht der nächste Termin schon bereit: Er beginnt nach dem letzten, mit der gewählten Pause.</p>
       </div>
-      <label class="check"><input type="checkbox" id="pMaybe" checked> Eltern dürfen «Wenn nötig» wählen</label>
+      <div class="fld" id="pWeek" hidden><span id="wDaysLab">Wochentage</span>
+        <div class="seg wdays" id="wDays" role="group" aria-labelledby="wDaysLab"><button type="button" data-d="0">Mo</button><button type="button" data-d="1">Di</button><button type="button" data-d="2">Mi</button><button type="button" data-d="3">Do</button><button type="button" data-d="4">Fr</button><button type="button" data-d="5">Sa</button></div>
+        <span class="wlab">Lektionen</span>
+        <ul class="prows wper" id="wPer"></ul>
+        <div class="padd">
+          <div class="pgrp"><span id="wFromLab">Beginn</span>
+            <div class="pdrow ptm" role="group" aria-labelledby="wFromLab"><select id="wH" aria-label="Stunde"></select><b>:</b><select id="wM" aria-label="Minute"></select></div></div>
+          <label>Dauer<select id="wLen"></select></label>
+          <span class="pend"><span>Ende</span><b id="wEnd"></b></span>
+          <label>Pause danach<select id="wPause"></select></label>
+          <button type="button" class="btn small primary" id="wAdd">+ Lektion</button>
+        </div>
+        <p class="hint"><button type="button" class="linkbtn" id="wSample">Üblichen Schultag einsetzen</button> (8 Lektionen von 08:00 bis 16:00), danach nach Bedarf anpassen.</p>
+        <span class="wlab">Wann bist du verfügbar?</span>
+        <p class="hint">Ein Klick sperrt eine Lektion, die dir nicht passt. Gesperrte Lektionen sehen die Teilnehmenden gar nicht.</p>
+        <div id="wAvail"></div>
+        <p class="hint" id="wCount"></p>
+      </div>
+      <label class="check"><input type="checkbox" id="pMaybe" checked> <span id="pMaybeLab">Teilnehmende dürfen «Wenn nötig» wählen</span></label>
       <div class="amsg" id="pMsg" role="status" aria-live="polite" hidden></div>
       <div class="pbtns"><button class="btn primary" type="submit" id="pSave">Umfrage erstellen</button><button type="button" class="btn" id="pCancel" hidden>Abbrechen</button></div>
     </form>
@@ -555,7 +588,7 @@ input[type=date],input[type=time]{font:inherit}
         <button type="button" class="btn small primary" id="pvCopy"><span>Link kopieren</span></button>
         <a class="btn small" id="pvMail" href="#">Per E-Mail</a>
         <a class="btn small" id="pvOpen" href="#" target="_blank" rel="noopener">Ansehen</a></div>
-      <p class="hint">Diesen Link den Eltern schicken. Jede neue Antwort erscheint hier automatisch, und die Verteilung passt sich an. Was du einstellst (Gruppen, Schwierigkeitsgrad, Stecknadeln, weggelassene Tage), bleibt dabei erhalten.</p>
+      <p class="hint">Diesen Link den Teilnehmenden schicken. Jede neue Antwort erscheint hier automatisch, und die Verteilung passt sich an. Was du einstellst (Gruppen, Schwierigkeitsgrad, Stecknadeln, weggelassene Tage), bleibt dabei erhalten.</p>
       <div class="pbtns"><button type="button" class="btn small" id="pvEdit">Umfrage bearbeiten</button><button type="button" class="btn small" id="pvToggle">Umfrage schliessen</button><button type="button" class="btn small quiet" id="pvRefresh">Aktualisieren</button></div>
       <details class="hardbox pcomments" id="pvComments" hidden><summary>Bemerkungen der Eltern <span class="hcount" id="pvCcount"></span></summary><ul id="pvClist"></ul></details>
     </div>
@@ -587,7 +620,7 @@ input[type=date],input[type=time]{font:inherit}
       <label class="fld"><span>Absender</span><input type="text" id="mSender" maxlength="120" autocomplete="name" placeholder="z. B. Anna Muster"></label>
     </div>
     <label class="fld"><span>Vorlage</span><textarea id="mText" rows="9"></textarea></label>
-    <p class="hint">Platzhalter: {Name}, {Datum}, {Zeit}, {Ort}, {Absender}. Sie werden für jede Familie ersetzt. <button type="button" class="linkbtn" id="mReset">Vorlage zurücksetzen</button></p>
+    <p class="hint"><span id="mPh">Platzhalter: {Name}, {Datum}, {Zeit}, {Ort}, {Absender}. Sie werden für jede Person ersetzt.</span> <button type="button" class="linkbtn" id="mReset">Vorlage zurücksetzen</button></p>
     <div class="amsg" id="mNote" hidden></div>
     <div id="mOut">
       <div class="mprev"><b id="mPrevHead">Vorschau</b><pre id="mPrev"></pre></div>
@@ -596,8 +629,8 @@ input[type=date],input[type=time]{font:inherit}
     </div>
   </section>
   <details class="hardbox" id="hardBox">
-    <summary>Gespräche einteilen: Schwierigkeitsgrad und gemeinsame Termine <span class="hcount" id="hardCount">optional</span></summary>
-    <ul class="hhelp">
+    <summary><span id="hardTitle">Gespräche einteilen: Schwierigkeitsgrad und gemeinsame Termine</span> <span class="hcount" id="hardCount">optional</span></summary>
+    <ul class="hhelp" id="hardHelp">
       <li><b>Auf ein anderes Gespräch ziehen:</b> Die beiden bekommen einen gemeinsamen Termin, z. B. Eltern, die getrennt geantwortet haben. Mit × wird die Gruppe wieder gelöst.</li>
       <li><b>Antippen:</b> wechselt zwischen einfach und anspruchsvoll. Anspruchsvolle Gespräche plant SmartSlots nach Möglichkeit nicht direkt nacheinander.</li>
     </ul>
@@ -951,7 +984,8 @@ function setData(d, info){
     cap: old ? old.cap : 1, useMaybe: old ? old.useMaybe : true, showFree: old ? old.showFree : false, mode: old && old.mode || 'kompakt', nextId: 1, slots: [], people: [], pins: {} };
   if (old && old.msg) s.msg = old.msg;
   d.slots.forEach(function(x){ s.slots.push({ id: s.nextId++, day: x.day || '', time: x.time || '', on: true }); });
-  d.people.forEach(function(x){ var p = { id: s.nextId++, name: x.name, from: x.name, orig: x.key || x.name, on: true, ans: x.ans.slice() }; if (x.resp) p.resp = x.resp; s.people.push(p); });
+  if (d.kind) s.kind = d.kind;
+  d.people.forEach(function(x){ var p = { id: s.nextId++, name: x.name, from: x.name, orig: x.key || x.name, on: true, ans: x.ans.slice() }; if (x.resp) p.resp = x.resp; if (x.part) p.part = x.part; s.people.push(p); });
   normalizeDays(s.slots);
   /* Bei einer eigenen Umfrage (keep) bleibt immer alles, was von Hand gemacht wurde */
   if (old && (info.keep || samePoll(old, s))){ carryOver(old, s); normalizeDays(s.slots); tidyGroups(s); }
@@ -1373,45 +1407,56 @@ function renderAll(){
   $('#showFree').checked = !!state.showFree;
   renderSummary(last); renderMissing(last); renderPlan(last); renderMeta(); renderGrid(last);
   renderMsgBtn();
+  $('#hardTitle').textContent = isWk() ? 'Lektionen einteilen: zusammenlegen und Schwierigkeitsgrad' : 'Gespräche einteilen: Schwierigkeitsgrad und gemeinsame Termine';
+  $('#hardHelp').innerHTML = isWk()
+    ? '<li><b>Auf eine andere Lektion ziehen:</b> Die beiden finden zusammen in derselben Lektion statt, z. B. zwei Kinder aus verschiedenen Klassen. Mit × wird das wieder getrennt.</li><li><b>Antippen:</b> wechselt zwischen einfach und anspruchsvoll. Anspruchsvolle Lektionen plant SmartSlots nach Möglichkeit nicht direkt nacheinander.</li>'
+    : '<li><b>Auf ein anderes Gespräch ziehen:</b> Die beiden bekommen einen gemeinsamen Termin, z. B. Eltern, die getrennt geantwortet haben. Mit × wird die Gruppe wieder gelöst.</li><li><b>Antippen:</b> wechselt zwischen einfach und anspruchsvoll. Anspruchsvolle Gespräche plant SmartSlots nach Möglichkeit nicht direkt nacheinander.</li>';
+  $('#newPerson').placeholder = isWk() ? 'Lektion hinzufügen (z. B. Klasse ohne Antwort)' : 'Familie hinzufügen (z. B. Antwort per Telefon)';
+  $('#addPerson button').textContent = '+ ' + W1();
 }
+/* Wochenplan: es geht um Lektionen statt Familien */
+function isWk(){ return !!(state && state.kind === 'week'); }
+function W1(){ return isWk() ? 'Lektion' : 'Familie'; }
+function WN(){ return isWk() ? 'Lektionen' : 'Familien'; }
 function renderSummary(r){
   var got = r.nOn - r.missing.length;
   function tile(label, value, of, tone){
     return '<div class="kpi' + (tone ? ' ' + tone : '') + '"><div class="lab"><span class="dot" aria-hidden="true"></span>' + label + '</div><div class="val">' + value + (of != null ? ' <small>von ' + of + '</small>' : '') + '</div></div>';
   }
   $('#summary').innerHTML =
-    tile('Familien mit Termin', got, r.nOn, !r.nOn ? '' : r.missing.length ? 'warn' : 'good') +
+    tile(isWk() ? 'Lektionen eingeplant' : 'Familien mit Termin', got, r.nOn, !r.nOn ? '' : r.missing.length ? 'warn' : 'good') +
     tile('Lücken', r.nGaps, null, got && !r.nGaps ? 'good' : '');
   var notes = [];
-  if (r.nOn && !r.missing.length) notes.push('🎉 ' + (r.nOn === 1 ? 'Die Familie hat' : 'Alle ' + r.nOn + ' Familien haben') + ' einen Termin.');
-  if (r.proven && r.nDays > 1) notes.push('Weniger als ' + r.nDays + ' Tage reichen nicht für alle ' + got + ' Familien.');
-  if (r.nOn > r.nOpen) notes.push('Es gibt weniger Plätze als Familien.');
+  if (r.nOn && !r.missing.length) notes.push('🎉 ' + (isWk() ? (r.nOn === 1 ? 'Die Lektion ist' : 'Alle ' + r.nOn + ' Lektionen sind') + ' eingeplant.' : (r.nOn === 1 ? 'Die Familie hat' : 'Alle ' + r.nOn + ' Familien haben') + ' einen Termin.'));
+  if (r.proven && r.nDays > 1) notes.push('Weniger als ' + r.nDays + ' Tage reichen nicht für alle ' + got + ' ' + WN() + '.');
+  if (r.nOn > r.nOpen) notes.push('Es gibt weniger Plätze als ' + WN() + '.');
   if (r.anyHard && got) notes.push(r.nAdj ? (r.nAdj === 1 ? 'Einmal folgen' : r.nAdj + '-mal folgen') + ' zwei anspruchsvolle Gespräche direkt aufeinander; anders ging es nicht.' : 'Anspruchsvolle Gespräche folgen nirgends direkt aufeinander.');
   var off = dayGroups(state, slotOrder(state)).filter(function(g){ return g.idx.every(function(j){ return !state.slots[j].on; }); });
   var n = $('#summaryNote');
   n.hidden = !notes.length && !off.length;
   n.innerHTML = notes.map(esc).join(' ') + off.map(function(g){ return ' <span class="offday">Weggelassen: ' + esc(g.day || 'Termine') + ' <button type="button" class="linkbtn" data-act="restoreday" data-key="' + esc(g.key) + '">wieder aufnehmen</button></span>'; }).join('');
-  $('#planSub').textContent = r.nOn ? got + ' von ' + plural(r.nOn, 'Familie', 'Familien') + ' an ' + plural(r.nDays, 'Tag', 'Tagen') + (r.nDays ? (r.nGaps ? ', ' + plural(r.nGaps, 'Lücke', 'Lücken') : ', ohne Lücken') : '') + '.' : 'Noch keine Familien eingetragen.';
+  $('#planSub').textContent = r.nOn ? got + ' von ' + plural(r.nOn, W1(), WN()) + ' an ' + plural(r.nDays, 'Tag', 'Tagen') + (r.nDays ? (r.nGaps ? ', ' + plural(r.nGaps, 'Lücke', 'Lücken') : ', ohne Lücken') : '') + '.' : 'Noch keine ' + WN() + ' eingetragen.';
 }
 function unitName(r, x){ return r.units[x].members.map(function(i){ return state.people[i].name; }).join(' + '); }
 function renderMissing(r){
   var el = $('#missing'), s = state;
   if (!r.missing.length){ el.hidden = true; el.innerHTML = ''; return; }
   var n = r.missing.length;
-  var h = '<h3>' + WARN + 'Kein Termin möglich für ' + (n === 1 ? '1 Familie' : n + ' Familien') + '</h3><ul>';
+  var h = '<h3>' + WARN + (isWk() ? 'Kein Platz für ' : 'Kein Termin möglich für ') + (n === 1 ? '1 ' + W1() : n + ' ' + WN()) + '</h3><ul>';
   r.missing.forEach(function(m){
     var why, group = r.units[m.u].members.length > 1;
     if (m.why === 'none') why = group ? 'haben keinen Termin angekreuzt.' : 'hat keinen Termin angekreuzt.';
     else if (m.why === 'nocommon') why = 'haben keinen gemeinsamen Termin angekreuzt.';
     else if (m.why === 'off') why = (group ? 'haben' : 'hat') + ' nur Termine angekreuzt, die ausgeschaltet sind.';
     else if (m.why === 'maybe') why = (group ? 'haben' : 'hat') + ' nur «wenn nötig» angekreuzt, und das ist ausgeschaltet.';
-    else why = 'alle passenden Termine sind besetzt, und jede andere Verteilung liesse eine andere Familie ohne Termin: ' + m.opts.map(function(j){
+    else why = 'alle passenden Termine sind besetzt, und jede andere Verteilung liesse ' + (isWk() ? 'eine andere Lektion ohne Platz' : 'eine andere Familie ohne Termin') + ': ' + m.opts.map(function(j){
       var hs = r.holdersU[j].map(function(x){ return esc(unitName(r, x)) + (r.uPinned[x] ? ' (festgehalten)' : ''); }).join(', ');
       return esc(slotLabel(s.slots[j])) + (hs ? ' (' + hs + ')' : '');
     }).join('; ') + '.';
     h += '<li><b>' + esc(unitName(r, m.u)) + '</b> <span class="why">– ' + why + '</span></li>';
   });
-  h += '</ul><p class="tip">Tipp: Diese Familien nach weiteren Zeiten fragen und unten ankreuzen oder einen zusätzlichen Termin hinzufügen. Soll lieber eine andere Familie verschoben werden: die gewünschte Familie mit der Stecknadel festhalten.</p>';
+  h += isWk() ? '</ul><p class="tip">Tipp: Bei diesen Klassen nach weiteren Zeiten fragen und unten ankreuzen, oder Lektionen per Drag &amp; Drop zusammenlegen. Soll lieber eine andere Lektion verschoben werden: die gewünschte mit der Stecknadel festhalten.</p>'
+    : '</ul><p class="tip">Tipp: Diese Familien nach weiteren Zeiten fragen und unten ankreuzen oder einen zusätzlichen Termin hinzufügen. Soll lieber eine andere Familie verschoben werden: die gewünschte Familie mit der Stecknadel festhalten.</p>';
   el.innerHTML = h; el.hidden = false;
 }
 function tagFor(r, x, j){
@@ -1444,7 +1489,7 @@ function renderPlan(r){
       var drop = '';
       if (d.used && d.lost > 0 && d.lost <= 3){
         var only = d.only.length === d.lost ? 'Dieser Tag wird nur für ' + d.only.map(function(u){ return esc(unitName(r, u)); }).join(', ') + ' gebraucht.'
-          : 'Ohne diesen Tag bekämen ' + (d.lost === 1 ? '1 Familie' : d.lost + ' Familien') + ' keinen Termin.';
+          : 'Ohne diesen Tag bekämen ' + (d.lost === 1 ? '1 ' + W1() : d.lost + ' ' + WN()) + ' keinen Platz.';
         drop = '<div class="drop"><span>' + only + '</span><button type="button" class="btn small" data-act="dropday" data-d="' + k + '">Tag weglassen</button></div>';
       }
       h += '<section class="dayc"><header><h3>' + esc(dayLabel(d)) + '</h3><span class="dm">' + dayMeta(d) + '</span></header>' + drop + (rows ? '<ol class="rows">' + rows + '</ol>' : '') + '</section>';
@@ -1463,7 +1508,7 @@ function renderHard(r){
       '<button type="button" class="hmain" data-act="hard" data-u="' + x + '" aria-pressed="' + u.hard + '" aria-label="' + nm + ': ' + (u.hard ? 'anspruchsvoll' : 'einfach') + '. Antippen zum Wechseln, ziehen für einen gemeinsamen Termin" title="Antippen: einfach / anspruchsvoll · Ziehen: auf ein anderes Gespräch für einen gemeinsamen Termin">' +
       (grp ? LINK : '') + '<span class="hn">' + nm + '</span><span class="hl">' + (u.hard ? 'Anspruchsvoll' : 'Einfach') + '</span></button>' +
       (grp ? '<button type="button" class="hx" data-act="ungroup" data-gid="' + esc(u.group) + '" aria-label="Gruppe ' + nm + ' lösen" title="Gruppe lösen">×</button>' : '') + '</div>';
-  }).join('') : '<p class="empty">Noch keine Familien.</p>';
+  }).join('') : '<p class="empty">Noch keine ' + WN() + '.</p>';
   var n = r.units.filter(function(u){ return u.hard; }).length, g = r.units.filter(function(u){ return u.members.length > 1; }).length, bits = [];
   if (n) bits.push(n + ' anspruchsvoll');
   if (g) bits.push(g === 1 ? '1 gemeinsamer Termin' : g + ' gemeinsame Termine');
@@ -1473,7 +1518,7 @@ function renderMeta(){
   var s = state, bits = [];
   if (s.title) bits.push('<b>' + esc(s.title) + '</b>');
   if (s.source) bits.push(esc(s.source));
-  bits.push(plural(s.people.length, 'Familie', 'Familien'));
+  bits.push(plural(s.people.length, W1(), WN()));
   bits.push(plural(s.slots.length, 'Termin', 'Termine'));
   if (s.loaded) bits.push((s.pollId ? 'aktualisiert ' : 'eingelesen ') + fmt(new Date(s.loaded), { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }));
   $('#meta').innerHTML = bits.map(function(b){ return '<span class="chip">' + b + '</span>'; }).join('');
@@ -1508,7 +1553,7 @@ function renderGrid(r){
   });
   function fc(j, cls){ cls = (cls || '') + (first[j] ? ' first' : ''); return cls.trim() ? ' class="' + cls.trim() + '"' : ''; }
   var h = '<thead>';
-  var corner = '<th class="corner" scope="col"' + (anyDay ? ' rowspan="2"' : '') + '>Familie</th>';
+  var corner = '<th class="corner" scope="col"' + (anyDay ? ' rowspan="2"' : '') + '>' + W1() + '</th>';
   if (anyDay) h += '<tr>' + corner + groups.map(function(g, k){
     var n = g.idx.filter(function(j){ return s.slots[j].on; }).length;
     return '<th class="dayh' + (n ? '' : ' off') + '" scope="colgroup" colspan="' + g.idx.length + '">' + esc(g.day || '–') + (n ? '' : ' <span class="offt">weggelassen</span>') + '</th>';
@@ -1538,7 +1583,7 @@ function renderGrid(r){
           esc(p.name + ', ' + slotLabel(s.slots[j]) + ': ' + word + (pick ? ', zugeteilt' : '')) + '">' + (v === Y ? '✓' : v === M ? '(✓)' : '·') + '</button></td>';
       }).join('') + '</tr>';
   });
-  if (!s.people.length) h += '<tr><th class="who" scope="row" style="padding:10px;color:var(--ink-3)">Noch keine Familien</th>' + order.map(function(j){ return '<td' + fc(j) + '></td>'; }).join('') + '</tr>';
+  if (!s.people.length) h += '<tr><th class="who" scope="row" style="padding:10px;color:var(--ink-3)">Noch keine ' + WN() + '</th>' + order.map(function(j){ return '<td' + fc(j) + '></td>'; }).join('') + '</tr>';
   h += '</tbody><tfoot><tr><th class="who" scope="row">Zusagen</th>' + order.map(function(j){ return '<td' + fc(j) + '>' + counts[j] + '</td>'; }).join('') + '</tr></tfoot>';
   var g = $('#grid');
   g.innerHTML = h;
@@ -1576,7 +1621,7 @@ function planText(){
 }
 function csvCell(v){ v = String(v); if (/^[=+\-@]/.test(v)) v = "'" + v; return /[;"\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
 function planCSV(){
-  var s = state, r = last, rows = [['Tag', 'Zeit', 'Familie', 'Hinweis']];
+  var s = state, r = last, rows = [['Tag', 'Zeit', W1(), 'Hinweis']];
   r.days.forEach(function(d){
     if (d.used) dayRows(d).forEach(function(x){
       var sl = s.slots[x.j];
@@ -1611,11 +1656,14 @@ var MSG_DEF = {
   sie1: 'Guten Tag {Name}\n\nVielen Dank fürs Ausfüllen. Ich freue mich, Sie am {Datum} um {Zeit} begrüssen zu dürfen.\nOrt: {Ort}\n\nMit freundlichen Grüssen\n{Absender}',
   sien: 'Liebe Familie {Name}\n\nVielen Dank fürs Ausfüllen. Ich freue mich, Sie am {Datum} um {Zeit} begrüssen zu dürfen.\nOrt: {Ort}\n\nMit freundlichen Grüssen\n{Absender}',
   du1: 'Hallo {Name}\n\nVielen Dank fürs Ausfüllen. Ich freue mich, dich am {Datum} um {Zeit} begrüssen zu dürfen.\nOrt: {Ort}\n\nLiebe Grüsse\n{Absender}',
-  dun: 'Liebe Familie {Name}\n\nVielen Dank fürs Ausfüllen. Ich freue mich, euch am {Datum} um {Zeit} begrüssen zu dürfen.\nOrt: {Ort}\n\nLiebe Grüsse\n{Absender}'
+  dun: 'Liebe Familie {Name}\n\nVielen Dank fürs Ausfüllen. Ich freue mich, euch am {Datum} um {Zeit} begrüssen zu dürfen.\nOrt: {Ort}\n\nLiebe Grüsse\n{Absender}',
+  /* Wochenplan: eine Nachricht je Klasse mit allen Lektionen */
+  weeksie: 'Guten Tag {Name}\n\nVielen Dank fürs Ausfüllen. Die Lektionen sind so eingeplant:\n{Termine}\nOrt: {Ort}\n\nMit freundlichen Grüssen\n{Absender}',
+  weekdu: 'Hallo {Name}\n\nVielen Dank fürs Ausfüllen. Die Lektionen sind so eingeplant:\n{Termine}\nOrt: {Ort}\n\nLiebe Grüsse\n{Absender}'
 };
 var SENDER_KEY = 'smartslots-absender';
 function msgOpts(){ return state.msg || (state.msg = { du: false, many: true, place: '', sender: '', text: '' }); }
-function msgKey(m){ return (m.du ? 'du' : 'sie') + (m.many ? 'n' : '1'); }
+function msgKey(m){ return isWk() ? 'week' + (m.du ? 'du' : 'sie') : (m.du ? 'du' : 'sie') + (m.many ? 'n' : '1'); }
 function msgTpl(m){ return m.text || MSG_DEF[msgKey(m)]; }
 function msgPlace(m){ return clean(m.place) || (poll.row && poll.row.location) || ''; }
 function msgReady(){ return !!(state && last && last.nOn > 0 && !last.missing.length); }
@@ -1626,14 +1674,32 @@ function longDay(x){
 function msgItems(){
   var s = state, r = last, rank = {}, out = [];
   slotOrder(s).forEach(function(j, k){ rank[j] = k; });
-  s.people.forEach(function(p, i){ var j = r.slotOf[i]; if (p.on && j >= 0) out.push({ i: i, name: p.name, j: j, date: longDay(s.slots[j]), time: timeFrom(s.slots[j].time) + (/^\d\d:\d\d$/.test(timeFrom(s.slots[j].time)) ? ' Uhr' : '') }); });
+  if (isWk()){
+    /* je Klasse (Antwort) eine Nachricht mit allen Lektionen; umbenannte Einträge (z. B. «Kind A») in Klammern */
+    var by = {}, keys = [];
+    s.people.forEach(function(p, i){
+      var j = r.slotOf[i];
+      if (!p.on || j < 0) return;
+      var key = p.resp || 'n:' + p.name, r0 = p.resp && poll.resp.filter(function(x){ return x.id === p.resp; })[0];
+      if (!by[key]){ by[key] = { i: i, name: r0 ? clean(r0.name) : p.name, list: [] }; keys.push(key); }
+      by[key].list.push({ j: j, label: p.name !== p.from ? p.name : '' });
+    });
+    return keys.map(function(k){
+      var g = by[k];
+      g.list.sort(function(a, b){ return rank[a.j] - rank[b.j]; });
+      var lines = g.list.map(function(x){ var sl = s.slots[x.j]; return '– ' + (sl.day ? sl.day + ', ' : '') + sl.time + ' Uhr' + (x.label ? ' (' + x.label + ')' : ''); });
+      var first = s.slots[g.list[0].j];
+      return { i: g.i, name: g.name, j: g.list[0].j, date: first.day || '', time: timeFrom(first.time) + ' Uhr', lessons: lines, sum: plural(lines.length, 'Lektion', 'Lektionen') + ': ' + lines.map(function(l){ return l.slice(2); }).join('; ') };
+    }).sort(function(a, b){ return rank[a.j] - rank[b.j] || a.i - b.i; });
+  }
+  s.people.forEach(function(p, i){ var j = r.slotOf[i]; if (p.on && j >= 0){ var it = { i: i, name: p.name, j: j, date: longDay(s.slots[j]), time: timeFrom(s.slots[j].time) + (/^\d\d:\d\d$/.test(timeFrom(s.slots[j].time)) ? ' Uhr' : '') }; it.sum = it.date + ', ' + it.time; it.lessons = ['– ' + it.sum]; out.push(it); } });
   return out.sort(function(a, b){ return rank[a.j] - rank[b.j] || a.i - b.i; });
 }
 function msgText(it, m){
-  var place = msgPlace(m), sender = clean(m.sender), vals = { name: it.name, datum: it.date, zeit: it.time, ort: place, absender: sender };
+  var place = msgPlace(m), sender = clean(m.sender), vals = { name: it.name, datum: it.date, zeit: it.time, termine: it.lessons.join('\n'), ort: place, absender: sender };
   /* Zeilen mit leerem Ort oder Absender weglassen */
   var lines = msgTpl(m).split('\n').filter(function(l){ return !(/\{ort\}/i.test(l) && !place) && !(/\{absender\}/i.test(l) && !sender); });
-  return lines.join('\n').replace(/\{(name|datum|zeit|ort|absender)\}/gi, function(x, k){ return vals[k.toLowerCase()]; }).replace(/\n{3,}/g, '\n\n').trim();
+  return lines.join('\n').replace(/\{(name|datum|zeit|termine|ort|absender)\}/gi, function(x, k){ return vals[k.toLowerCase()]; }).replace(/\n{3,}/g, '\n\n').trim();
 }
 function renderMsgBtn(){
   var b = $('#msgBtn'), ok = msgReady();
@@ -1650,6 +1716,9 @@ function msgFill(){
   $('#mPlace').value = msgPlace(m);
   $('#mSender').value = m.sender || '';
   $('#mText').value = msgTpl(m);
+  $('#mMany').closest('.mopt').hidden = isWk();
+  $('#hMsg').textContent = isWk() ? 'Nachrichten an die Lehrpersonen' : 'Nachrichten an die Familien';
+  $('#mPh').textContent = 'Platzhalter: {Name}, ' + (isWk() ? '{Termine}' : '{Datum}, {Zeit}') + ', {Ort}, {Absender}. Sie werden für jede ' + (isWk() ? 'Klasse' : 'Person') + ' ersetzt.';
 }
 function renderMsgs(){
   var m = msgOpts(), items = msgItems();
@@ -1660,7 +1729,7 @@ function renderMsgs(){
   if (!clean(m.sender)) miss.push('deinen Namen als Absender');
   note($('#mNote'), miss.length ? txt('', 'Tipp: Gib noch ' + miss.join(' und ') + ' ein, sonst ' + (miss.length > 1 ? 'fehlen diese Zeilen' : 'fehlt diese Zeile') + ' in den Nachrichten.') : null);
   $('#mList').innerHTML = items.map(function(it, k){
-    return '<li><span class="mn">' + esc(it.name) + '</span><span class="mt">' + esc(it.date + ', ' + it.time) + '</span><button type="button" class="btn small" data-k="' + k + '"><span>Kopieren</span></button></li>';
+    return '<li><span class="mn">' + esc(it.name) + '</span><span class="mt">' + esc(it.sum) + '</span><button type="button" class="btn small" data-k="' + k + '"><span>Kopieren</span></button></li>';
   }).join('');
 }
 function downloadText(name, text, type){
@@ -1699,12 +1768,12 @@ $('#mList').addEventListener('click', function(e){
 });
 $('#mTxt').addEventListener('click', function(){
   var m = msgOpts(), items = msgItems();
-  var text = items.map(function(it){ return 'An: ' + it.name + ' (' + it.date + ', ' + it.time + ')\n\n' + msgText(it, m); }).join('\n\n' + new Array(41).join('-') + '\n\n');
+  var text = items.map(function(it){ return 'An: ' + it.name + ' (' + it.sum + ')\n\n' + msgText(it, m); }).join('\n\n' + new Array(41).join('-') + '\n\n');
   downloadText(fileBase() + ' – Nachrichten.txt', '\ufeff' + text.replace(/\n/g, '\r\n') + '\r\n', 'text/plain;charset=utf-8');
 });
 $('#mCsv').addEventListener('click', function(){
-  var m = msgOpts(), rows = [['Name', 'Datum', 'Zeit', 'Ort', 'Nachricht']];
-  msgItems().forEach(function(it){ rows.push([it.name, it.date, it.time, msgPlace(m), msgText(it, m)]); });
+  var m = msgOpts(), rows = [isWk() ? ['Name', 'Lektionen', 'Ort', 'Nachricht'] : ['Name', 'Datum', 'Zeit', 'Ort', 'Nachricht']];
+  msgItems().forEach(function(it){ rows.push(isWk() ? [it.name, it.lessons.map(function(l){ return l.slice(2); }).join('; '), msgPlace(m), msgText(it, m)] : [it.name, it.date, it.time, msgPlace(m), msgText(it, m)]); });
   downloadText(fileBase() + ' – Nachrichten.csv', '\ufeff' + rows.map(function(r){ return r.map(csvCell).join(';'); }).join('\r\n') + '\r\n', 'text/csv;charset=utf-8');
 });
 
@@ -1734,7 +1803,7 @@ function demoData(){
    Die Datenbank zählt «version» bei jeder Änderung hoch. Hat inzwischen ein anderes Fenster gespeichert, wird nichts
    überschrieben, sondern nachgefragt. */
 var acct = { on: false, client: null, user: null, guest: false, carry: null, recovery: false, view: '', mode: 'in',
-  slot: null, dirty: false, saving: null, timer: 0, retry: 0, problem: '', errText: '', list: null, notice: null, nav: 0, busy: false, mail: '', out: false, toast: '', manual: false, polls: {}, draft0: null, noLoc: false };
+  slot: null, dirty: false, saving: null, timer: 0, retry: 0, problem: '', errText: '', list: null, notice: null, nav: 0, busy: false, mail: '', out: false, toast: '', manual: false, polls: {}, draft0: null, nocol: {} };
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 var SAVE_DELAY = 700;
 var ICON_SLOT = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h3"/></svg>';
@@ -1952,7 +2021,9 @@ function when(ts){
 function slotMeta(x){
   var m = x.meta || {}, parts = [], fam = +m.families || 0, miss = +m.missing || 0, pl = acct.polls[x.id];
   if (pl) parts.push('<span class="pbadge' + (pl.open ? '' : ' closed') + '">Umfrage ' + (pl.open ? 'offen' : 'geschlossen') + ' · ' + plural(pl.n, 'Antwort', 'Antworten') + '</span>');
-  if (fam) parts.push(plural(fam, 'Familie', 'Familien'), miss ? '<span class="warn">' + miss + ' ohne Termin</span>' : 'alle mit Termin');
+  var wk = m.kind === 'week';
+  if (wk) parts.push('Wochenplan');
+  if (fam) parts.push(plural(fam, wk ? 'Lektion' : 'Familie', wk ? 'Lektionen' : 'Familien'), miss ? '<span class="warn">' + miss + (wk ? ' ohne Platz' : ' ohne Termin') + '</span>' : wk ? 'alle eingeplant' : 'alle mit Termin');
   else if (!pl && m.draft) parts.push('<span class="pbadge closed">Umfrage im Entwurf</span>');
   else if (!pl) parts.push('noch keine Antworten');
   var w = when(x.updated_at);
@@ -2107,6 +2178,7 @@ function pack(st){
   var r = st ? solve(st) : null, dr = edDraft();
   var meta = st ? { families: r.nOn, missing: r.missing.length, days: r.nDays, file: st.source || '', poll: poll.row ? { open: poll.row.open, n: poll.resp.length } : null } : null;
   if (dr) meta = Object.assign(meta || {}, { draft: true });
+  if (st && st.kind) meta.kind = st.kind;
   return { v: 1, meta: meta, state: st, draft: dr };
 }
 function save(){
@@ -2288,9 +2360,16 @@ function initAccount(){
 var poll = { row: null, resp: [], src: '', timer: 0, busy: false, applying: false, at: 0, err: '', news: [], ed: null, editing: false, loading: false };
 var POLL_EVERY = 20000;
 /* Spalte «location» gibt es erst mit dem neuen SQL; bis dahin geht alles andere weiter */
-function pcols(){ return 'id,token,title,intro,' + (acct.noLoc ? '' : 'location,') + 'slots,allow_maybe,open,updated_at'; }
-function locMissing(e){ return !!e && /location/.test(e.message || '') && /does not exist|could not find/i.test(e.message || ''); }
+function pcols(){ return 'id,token,title,intro,' + (acct.nocol.location ? '' : 'location,') + (acct.nocol.layout ? '' : 'layout,') + 'slots,allow_maybe,open,updated_at'; }
 var RESP_COLS = 'id,name,answers,comment,created_at,updated_at';
+function rcols(){ return RESP_COLS + (acct.nocol.need ? '' : ',need'); }
+/* welche der später dazugekommenen Spalten fehlt? (SQL noch nicht nachgeführt) */
+function colMissing(e){
+  var m = e && e.message || '';
+  if (!/does not exist|could not find/i.test(m)) return '';
+  return ['location', 'layout', 'need'].filter(function(c){ return new RegExp('\\b' + c + '\\b').test(m) && !acct.nocol[c]; })[0] || '';
+}
+async function retryCols(q){ var r = await q(), c; while (r.error && (c = colMissing(r.error))){ acct.nocol[c] = true; r = await q(); } return r; }
 function pdb(t){ return acct.client.from(t); }
 function pollUrl(){ return new URL('umfrage.html?t=' + encodeURIComponent(poll.row.token), location.href).href; }
 function pollMode(){ return !!(acct.slot && poll.row); }
@@ -2337,13 +2416,16 @@ function edStart(){
     len = Math.min(180, Math.max(5, Math.round((hm(lastS.to) - hm(lastS.from)) / 5) * 5));
     if (prev && prev.date === lastS.date){ var g = hm(lastS.from) - hm(prev.to); if (g >= 0 && g <= 30 && g % 5 === 0) pause = g; }
   }
-  edLoad({ title: P ? P.title : acct.slot ? acct.slot.name : '', place: P ? P.location || '' : '', intro: P ? P.intro : '', maybe: P ? P.allow_maybe : true, days: days, pause: pause,
+  var L = P && P.layout && P.layout.kind === 'week' ? P.layout : null;
+  edLoad({ kind: L ? 'week' : 'dates', week: L ? { days: L.days, periods: L.periods, off: L.off } : null,
+    title: P ? P.title : acct.slot ? acct.slot.name : '', place: P ? P.location || '' : '', intro: P ? P.intro : '', maybe: P ? P.allow_maybe : true, days: days, pause: pause,
     entry: { date: lastS ? lastS.date : '', from: lastS ? hhmm(hm(lastS.to) + pause) : '16:00', len: len } });
 }
 /* Formular füllen, aus der Umfrage oder aus einem gespeicherten Entwurf */
 function edLoad(o){
   var P = poll.row, e = o.entry || {};
-  poll.ed = { days: cleanDays(o.days), pause: [0, 5, 10, 15, 20, 30].indexOf(+o.pause) >= 0 ? +o.pause : 0, move: null, touched: !!o.touched };
+  poll.ed = { days: cleanDays(o.days), pause: [0, 5, 10, 15, 20, 30].indexOf(+o.pause) >= 0 ? +o.pause : 0, move: null, touched: !!o.touched,
+    kind: o.kind === 'week' ? 'week' : 'dates', week: cleanWeek(o.week) };
   $('#pTitle').value = String(o.title || '').slice(0, 200);
   $('#pPlace').value = String(o.place || '').slice(0, 200);
   $('#pIntro').value = String(o.intro || '').slice(0, 2000);
@@ -2355,6 +2437,11 @@ function edLoad(o){
   $('#pLen').value = String(+e.len >= 5 && +e.len <= 180 && +e.len % 5 === 0 ? +e.len : 20);
   note($('#pMsg'), null);
   edPause(); edDay(); edEnd(); edRender();
+  var we = o.wentry || {}, ps = weekSorted(), lp = ps[ps.length - 1];
+  $('#wPause').value = String([0, 5, 10, 15, 20, 25, 30].indexOf(+we.pause) >= 0 ? +we.pause : 5);
+  $('#wLen').value = String(+we.len >= 5 && +we.len <= 180 && +we.len % 5 === 0 ? +we.len : 45);
+  wFromSet(hm(we.from) >= 0 ? we.from : lp ? hhmm(hm(lp.to) + +$('#wPause').value) : '08:00');
+  renderKind(); weekRender();
 }
 function cleanDays(days){
   var out = {};
@@ -2367,12 +2454,16 @@ function cleanDays(days){
 }
 /* Entwurf: wird mit dem SmartSlot gespeichert, solange die Umfrage noch nicht erstellt oder gespeichert ist */
 function edCollect(){
-  return { pollId: poll.row ? poll.row.id : null, title: $('#pTitle').value, place: $('#pPlace').value, intro: $('#pIntro').value, maybe: $('#pMaybe').checked,
+  var w = poll.ed.week;
+  return { pollId: poll.row ? poll.row.id : null, kind: poll.ed.kind, week: { days: w.days, periods: w.periods, off: Object.keys(w.off) },
+    wentry: { from: wFromGet(), len: +$('#wLen').value, pause: +$('#wPause').value },
+    title: $('#pTitle').value, place: $('#pPlace').value, intro: $('#pIntro').value, maybe: $('#pMaybe').checked,
     days: poll.ed.days, pause: poll.ed.pause, entry: { date: $('#pDate').value, from: fromGet(), len: +$('#pLen').value } };
 }
 function edDraft(){ return acct.slot && poll.ed && poll.ed.touched && (!poll.row || poll.editing) ? edCollect() : null; }
 function edDirty(){ if (!acct.slot || !poll.ed) return; poll.ed.touched = true; save(); }
 function edSlots(){
+  if (poll.ed.kind === 'week') return weekSlots();
   var days = poll.ed.days, out = [];
   Object.keys(days).sort().forEach(function(d){
     days[d].slice().sort(function(a, b){ return hm(a.from) - hm(b.from); }).forEach(function(t){
@@ -2521,22 +2612,140 @@ $('#pList').addEventListener('change', function(e){
 $('#pList').addEventListener('keydown', function(e){
   if (e.key === 'Enter' && e.target.closest('.pmd')){ e.preventDefault(); poll.ed.move = null; edRender(); }
 });
+/* ---------- Wochenplan (Stundenplan) ----------
+   Wochentage × Lektionen; gesperrte Lektionen kommen gar nicht in die Umfrage. Eine Lektion heisst «Tag-Kennung»,
+   z. B. «0-ab12cd34» = Montag, damit Antworten erhalten bleiben, wenn die Zeiten einer Lektion angepasst werden. */
+var WD_NAMES = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'], WD_SHORT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+var SCHOOL_DAY = [['08:00', '08:45'], ['08:50', '09:35'], ['09:55', '10:40'], ['10:45', '11:30'], ['11:35', '12:20'], ['13:30', '14:15'], ['14:20', '15:05'], ['15:15', '16:00']];
+function cleanWeek(w){
+  w = w || {};
+  var days = (Array.isArray(w.days) ? w.days : [0, 1, 2, 3, 4]).map(Number).filter(function(d, i, a){ return d >= 0 && d <= 5 && a.indexOf(d) === i; }).sort();
+  var periods = (Array.isArray(w.periods) ? w.periods : []).filter(function(p){ return p && hm(p.from) >= 0 && hm(p.to) > hm(p.from); })
+    .map(function(p){ return { id: String(p.id || rid()).slice(0, 20), from: hhmm(hm(p.from)), to: hhmm(hm(p.to)) }; });
+  var off = {};
+  (Array.isArray(w.off) ? w.off : Object.keys(w.off || {})).forEach(function(k){ off[String(k)] = true; });
+  return { days: days.length ? days : [0, 1, 2, 3, 4], periods: periods, off: off };
+}
+function weekSorted(){ return poll.ed.week.periods.slice().sort(function(a, b){ return hm(a.from) - hm(b.from); }); }
+function weekSlots(){
+  var w = poll.ed.week, out = [];
+  w.days.forEach(function(d){ weekSorted().forEach(function(p){ var id = d + '-' + p.id; if (!w.off[id]) out.push({ id: id, wd: d, day: WD_NAMES[d], from: p.from, to: p.to, time: p.from + '–' + p.to }); }); });
+  return out;
+}
+function weekLayout(){
+  var w = poll.ed.week, ps = weekSorted(), ok = {};
+  w.days.forEach(function(d){ ps.forEach(function(p){ ok[d + '-' + p.id] = true; }); });
+  return { kind: 'week', days: w.days.slice(), periods: ps, off: Object.keys(w.off).filter(function(k){ return w.off[k] && ok[k]; }) };
+}
+(function(){
+  var h = '', m = '', l = '', z = '';
+  for (var i = 0; i < 24; i++) h += '<option value="' + (i < 10 ? '0' : '') + i + '">' + (i < 10 ? '0' : '') + i + '</option>';
+  for (var k = 0; k < 60; k += 5) m += '<option value="' + (k < 10 ? '0' : '') + k + '">' + (k < 10 ? '0' : '') + k + '</option>';
+  for (var n = 5; n <= 180; n += 5) l += '<option value="' + n + '">' + n + ' Min.</option>';
+  for (var q = 0; q <= 30; q += 5) z += '<option value="' + q + '">' + (q ? q + ' Min.' : 'keine') + '</option>';
+  $('#wH').innerHTML = h; $('#wM').innerHTML = m; $('#wLen').innerHTML = l; $('#wPause').innerHTML = z;
+})();
+function wFromGet(){ return $('#wH').value + ':' + $('#wM').value; }
+function wFromSet(t){ var n = Math.min(1435, Math.max(0, Math.round(hm(t) / 5) * 5)); if (hm(t) < 0) return; $('#wH').value = hhmm(n).slice(0, 2); $('#wM').value = hhmm(n).slice(3); }
+function wEnd(){ var a = hm(wFromGet()), len = +$('#wLen').value; $('#wEnd').textContent = a >= 0 && a + len <= 1440 ? hhmm(a + len) : '–'; }
+function renderKind(){
+  var week = poll.ed && poll.ed.kind === 'week';
+  [].forEach.call(document.querySelectorAll('#pKind button'), function(b){ b.setAttribute('aria-pressed', String((b.dataset.k === 'week') === week)); });
+  $('#pKindRow').hidden = !!poll.row;   // eine bestehende Umfrage behält ihre Art
+  $('#pKindHint').textContent = week ? 'Wiederkehrende Lektionen in der Woche, z. B. für Logopädie oder andere Förderlektionen. Die Teilnehmenden geben an, welche Lektionen passen und wie viele es braucht.' : 'Termine an bestimmten Tagen, z. B. für Elterngespräche.';
+  $('#pDates').hidden = week;
+  $('#pWeek').hidden = !week;
+  $('#pMaybeLab').textContent = week ? 'Teilnehmende dürfen «Wenn\'s sein muss» wählen' : 'Teilnehmende dürfen «Wenn nötig» wählen';
+  $('#pIntro').placeholder = week ? 'z. B. Bitte geben Sie an, welche Lektionen für die Logopädie Ihrer Klasse passen.' : 'z. B. Bitte geben Sie an, welche Zeiten für Sie passen. Ein Gespräch dauert 20 Minuten.';
+}
+function weekRender(){
+  var w = poll.ed.week, ps = weekSorted();
+  [].forEach.call(document.querySelectorAll('#wDays button'), function(b){ b.setAttribute('aria-pressed', String(w.days.indexOf(+b.dataset.d) >= 0)); });
+  $('#wPer').innerHTML = !ps.length ? '<li class="pempty">Noch keine Lektionen. Beginn und Dauer wählen, dann «+ Lektion», oder den üblichen Schultag einsetzen.</li>' : ps.map(function(p, k){
+    var gap = k ? hm(p.from) - hm(ps[k - 1].to) : 0;
+    return '<li class="prow"><span class="pt">' + (k + 1) + '. ' + esc(p.from + '–' + p.to) + '</span><span class="pl">' + (hm(p.to) - hm(p.from)) + ' Min.' + (gap > 0 ? ' <span class="pg">· ' + gap + ' Min. Pause davor</span>' : '') + '</span>' +
+      '<button type="button" class="hx" data-pid="' + esc(p.id) + '" aria-label="Lektion ' + esc(p.from) + ' entfernen" title="entfernen">×</button></li>';
+  }).join('');
+  $('#wAvail').innerHTML = !ps.length ? '' : '<table class="wgrid"><thead><tr><th scope="col"><span class="sr">Lektion</span></th>' + w.days.map(function(d){ return '<th scope="col">' + WD_SHORT[d] + '</th>'; }).join('') + '</tr></thead><tbody>' + ps.map(function(p){
+    return '<tr><th scope="row" class="wt">' + esc(p.from) + '<br>' + esc(p.to) + '</th>' + w.days.map(function(d){
+      var id = d + '-' + p.id, off = !!w.off[id];
+      return '<td><button type="button" class="wa' + (off ? ' off' : '') + '" data-id="' + esc(id) + '" aria-pressed="' + !off + '" aria-label="' + esc(WD_NAMES[d] + ', ' + p.from + '–' + p.to + ': ' + (off ? 'gesperrt' : 'frei')) + '">' + (off ? '–' : '✓') + '</button></td>';
+    }).join('') + '</tr>';
+  }).join('') + '</tbody></table>';
+  var n = weekSlots().length;
+  $('#wCount').textContent = ps.length ? plural(n, 'Lektion', 'Lektionen') + ' frei für die Teilnehmenden.' : '';
+  wEnd();
+}
+$('#pKind').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-k]');
+  if (!b || poll.row || !poll.ed) return;
+  poll.ed.kind = b.dataset.k;
+  renderKind(); note($('#pMsg'), null); edDirty();
+});
+$('#wDays').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-d]');
+  if (!b) return;
+  var w = poll.ed.week, d = +b.dataset.d, i = w.days.indexOf(d);
+  if (i >= 0){ if (w.days.length === 1) return note($('#pMsg'), txt('err', 'Mindestens ein Wochentag braucht es.')); w.days.splice(i, 1); }
+  else { w.days.push(d); w.days.sort(); }
+  note($('#pMsg'), null); weekRender(); edDirty();
+});
+['#wH', '#wM', '#wLen'].forEach(function(id){ $(id).addEventListener('change', wEnd); });
+$('#wAdd').addEventListener('click', function(){
+  var w = poll.ed.week, a = hm(wFromGet()), b = a + +$('#wLen').value;
+  if (b > 1440) return note($('#pMsg'), txt('err', 'Die Lektion muss vor Mitternacht enden.'));
+  var hit = w.periods.filter(function(p){ return hm(p.from) < b && a < hm(p.to); })[0];
+  if (hit) return note($('#pMsg'), txt('err', 'Diese Lektion überschneidet sich mit ' + hit.from + '–' + hit.to + '.'));
+  if (w.periods.length >= 20) return note($('#pMsg'), txt('err', 'Höchstens 20 Lektionen pro Tag.'));
+  w.periods.push({ id: rid(), from: hhmm(a), to: hhmm(b) });
+  wFromSet(hhmm(Math.min(b + +$('#wPause').value, 1435)));
+  note($('#pMsg'), null); weekRender(); edDirty();
+});
+$('#wSample').addEventListener('click', function(){
+  var w = poll.ed.week;
+  if (w.periods.length && !confirm('Die bisherigen Lektionen durch einen üblichen Schultag ersetzen?')) return;
+  w.periods = SCHOOL_DAY.map(function(x){ return { id: rid(), from: x[0], to: x[1] }; });
+  w.off = {};
+  wFromSet('16:05'); $('#wLen').value = '45'; $('#wPause').value = '5';
+  note($('#pMsg'), null); weekRender(); edDirty();
+});
+$('#wPer').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-pid]');
+  if (!b) return;
+  var w = poll.ed.week, pid = b.dataset.pid;
+  w.periods = w.periods.filter(function(p){ return p.id !== pid; });
+  Object.keys(w.off).forEach(function(k){ if (k.split('-')[1] === pid) delete w.off[k]; });
+  weekRender(); edDirty();
+});
+$('#wAvail').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-id]');
+  if (!b) return;
+  var w = poll.ed.week;
+  if (w.off[b.dataset.id]) delete w.off[b.dataset.id]; else w.off[b.dataset.id] = true;
+  weekRender(); edDirty();
+});
 $('#pCancel').addEventListener('click', function(){ poll.editing = false; poll.ed = null; renderSource(); save(); });
 $('#pollForm').addEventListener('submit', async function(e){
   e.preventDefault();
   var sl = acct.slot, P = poll.row, slots = edSlots(), title = clean($('#pTitle').value).slice(0, 200) || sl.name;
   var place = clean($('#pPlace').value).slice(0, 200);
   if (!place){ note($('#pMsg'), txt('err', 'Bitte den Ort angeben, z. B. Schulzimmer 12. Er steht auch in der Umfrage und in den Nachrichten.')); $('#pPlace').focus(); return; }
-  if (acct.noLoc) return note($('#pMsg'), txt('err', 'Für den Ort braucht es eine Ergänzung in Supabase: Bitte das SQL aus supabase/smartslot.sql nochmals ganz ausführen und die Seite neu laden.'));
+  if (acct.nocol.location) return note($('#pMsg'), txt('err', 'Für den Ort braucht es eine Ergänzung in Supabase: Bitte das SQL aus supabase/smartslot.sql nochmals ganz ausführen und die Seite neu laden.'));
+  var week = poll.ed.kind === 'week';
+  if (week && acct.nocol.layout) return note($('#pMsg'), txt('err', 'Für den Wochenplan braucht es eine Ergänzung in Supabase: Bitte das SQL aus supabase/smartslot.sql nochmals ganz ausführen und die Seite neu laden.'));
+  if (week && !poll.ed.week.periods.length) return note($('#pMsg'), txt('err', 'Bitte zuerst die Lektionen eintragen: Beginn und Dauer wählen, dann «+ Lektion», oder den üblichen Schultag einsetzen.'));
+  if (week && !slots.length) return note($('#pMsg'), txt('err', 'Alle Lektionen sind gesperrt. Bitte mindestens eine Lektion freigeben.'));
   if (!slots.length) return note($('#pMsg'), txt('err', 'Bitte zuerst Termine hinzufügen: Datum, Beginn und Dauer wählen, dann «+ Hinzufügen».'));
   if (!P && state && state.people.length && !confirm('In diesem SmartSlot sind schon Antworten aus einer Datei. Sie werden durch die Antworten der Umfrage ersetzt. Weiter?')) return;
   if (P){
     var keep = {}, lost = 0;
     slots.forEach(function(x){ keep[x.id] = true; });
     poll.resp.forEach(function(r){ if (Object.keys(r.answers || {}).some(function(k){ return !keep[k] && r.answers[k] > 0; })) lost++; });
-    if (lost && !confirm(lost === 1 ? 'Eine Familie hat bei einem entfernten Termin zugesagt. Trotzdem speichern?' : lost + ' Familien haben bei entfernten Terminen zugesagt. Trotzdem speichern?')) return;
+    if (lost && !confirm(week ? (lost === 1 ? 'Eine Klasse hat bei einer entfernten oder gesperrten Lektion zugesagt. Trotzdem speichern?' : lost + ' Klassen haben bei entfernten oder gesperrten Lektionen zugesagt. Trotzdem speichern?')
+      : lost === 1 ? 'Eine Familie hat bei einem entfernten Termin zugesagt. Trotzdem speichern?' : lost + ' Familien haben bei entfernten Terminen zugesagt. Trotzdem speichern?')) return;
   }
   var body = { title: title, location: place, intro: $('#pIntro').value.slice(0, 2000), slots: slots, allow_maybe: $('#pMaybe').checked };
+  if (!acct.nocol.layout) body.layout = week ? weekLayout() : null;
   var btn = $('#pSave'); btn.disabled = true;
   var r = P ? await pdb('polls').update(body).eq('id', P.id).select(pcols())
             : await pdb('polls').insert(Object.assign({ smartslot_id: sl.id }, body)).select(pcols());
@@ -2557,6 +2766,7 @@ function renderPollView(){
   if (!P) return;
   var n = poll.resp.length, lastR = poll.resp.reduce(function(a, r){ return !a || r.updated_at > a.updated_at ? r : a; }, null);
   var bits = ['<span class="pdot" aria-hidden="true"></span><b>' + (P.open ? 'Offen' : 'Geschlossen') + '</b>', plural(n, 'Antwort', 'Antworten')];
+  if (pollWeek()) bits.push('Wochenplan');
   if (P.location) bits.push('Ort: ' + esc(P.location));
   if (lastR) bits.push('zuletzt: ' + esc(lastR.name) + ', ' + esc(when(lastR.updated_at)));
   if (poll.news.length) bits.push('<span class="pnew">' + (poll.news.length === 1 ? 'neu: ' + esc(poll.news[0]) : poll.news.length + ' neue Antworten') + '</span>');
@@ -2567,7 +2777,7 @@ function renderPollView(){
   var url = pollUrl();
   $('#pvLink').value = url;
   $('#pvOpen').href = url;
-  $('#pvMail').href = 'mailto:?subject=' + encodeURIComponent(P.title) + '&body=' + encodeURIComponent((P.intro ? P.intro + '\n\n' : '') + (P.location ? 'Ort: ' + P.location + '\n\n' : '') + 'Bitte tragen Sie hier ein, welche Termine für Sie passen:\n' + url);
+  $('#pvMail').href = 'mailto:?subject=' + encodeURIComponent(P.title) + '&body=' + encodeURIComponent((P.intro ? P.intro + '\n\n' : '') + (P.location ? 'Ort: ' + P.location + '\n\n' : '') + (pollWeek() ? 'Bitte tragen Sie hier ein, welche Lektionen passen und wie viele es braucht:\n' : 'Bitte tragen Sie hier ein, welche Termine für Sie passen:\n') + url);
   $('#pvToggle').textContent = P.open ? 'Umfrage schliessen' : 'Umfrage wieder öffnen';
   var cm = poll.resp.filter(function(r){ return clean(r.comment); });
   $('#pvComments').hidden = !cm.length;
@@ -2590,11 +2800,17 @@ $('#pvToggle').addEventListener('click', async function(){
 });
 
 /* ---------- Antworten holen und einarbeiten ---------- */
+function pollWeek(){ var L = poll.row && poll.row.layout; return !!(L && L.kind === 'week'); }
 function pollData(){
-  var P = poll.row;
-  return { title: P.title, slots: P.slots.map(function(x){ return { day: x.day, time: x.time }; }), people: poll.resp.map(function(r){
-    return { name: clean(r.name) || 'Ohne Namen', key: 'r:' + r.id, resp: r.id, ans: P.slots.map(function(x){ var v = r.answers && r.answers[x.id]; return v === 2 ? Y : v === 1 && P.allow_maybe ? M : N; }) };
-  }) };
+  var P = poll.row, week = pollWeek(), people = [];
+  poll.resp.forEach(function(r){
+    var base = clean(r.name) || 'Ohne Namen', ans = P.slots.map(function(x){ var v = r.answers && r.answers[x.id]; return v === 2 ? Y : v === 1 && P.allow_maybe ? M : N; });
+    if (!week) return people.push({ name: base, key: 'r:' + r.id, resp: r.id, ans: ans });
+    /* Wochenplan: so viele Einträge, wie die Klasse Lektionen braucht, z. B. «3a (1)» und «3a (2)» */
+    var n = Math.max(1, Math.min(20, Math.round(+r.need || 1)));
+    for (var k = 1; k <= n; k++) people.push({ name: n > 1 ? base + ' (' + k + ')' : base, key: 'r:' + r.id + ':' + k, resp: r.id, part: k, ans: ans.slice() });
+  });
+  return { title: P.title, kind: week ? 'week' : '', slots: P.slots.map(function(x){ return { day: x.day, time: x.time }; }), people: people };
 }
 function pollSig(){ return poll.row.id + '|' + poll.row.updated_at + '|' + poll.resp.map(function(r){ return r.id + '@' + r.updated_at; }).join(','); }
 function applyPoll(){
@@ -2612,7 +2828,7 @@ async function refreshPoll(manual){
   if (!sl || !P || poll.busy) return;
   if (!manual && (document.hidden || pollBusyUI())) return;
   poll.busy = true;
-  var r = await pdb('poll_responses').select(RESP_COLS).eq('poll_id', P.id).order('created_at', { ascending: true });
+  var r = await retryCols(function(){ return pdb('poll_responses').select(rcols()).eq('poll_id', P.id).order('created_at', { ascending: true }); });
   poll.busy = false;
   if (acct.slot !== sl || poll.row !== P) return;
   if (r.error){ poll.err = dbText(r.error); renderPollView(); return; }
@@ -2630,8 +2846,7 @@ function pollTick(){
 }
 async function pollLoad(sl){
   poll.loading = true; renderSource();
-  var r = await pdb('polls').select(pcols()).eq('smartslot_id', sl.id);
-  if (r.error && locMissing(r.error) && !acct.noLoc){ acct.noLoc = true; r = await pdb('polls').select(pcols()).eq('smartslot_id', sl.id); }
+  var r = await retryCols(function(){ return pdb('polls').select(pcols()).eq('smartslot_id', sl.id); });
   if (acct.slot !== sl) return;
   poll.loading = false;
   if (r.error){ poll.err = dbText(r.error); renderSource(); return; }
@@ -2660,7 +2875,8 @@ async function pollRename(p, name){
   save(); renderPollView();
 }
 async function pollDelete(p){
-  if (!confirm('Die Antwort von «' + p.name + '» löschen? Sie verschwindet auch aus der Umfrage.')) return;
+  var r0 = poll.resp.filter(function(x){ return x.id === p.resp; })[0], who = r0 ? clean(r0.name) : p.name;
+  if (!confirm(p.part ? 'Die Antwort von «' + who + '» löschen, mit allen Lektionen dieser Klasse? Sie verschwindet auch aus der Umfrage.' : 'Die Antwort von «' + who + '» löschen? Sie verschwindet auch aus der Umfrage.')) return;
   var r = await pdb('poll_responses').delete().eq('id', p.resp);
   if (r.error){ poll.err = dbText(r.error); renderPollView(); return; }
   poll.resp = poll.resp.filter(function(x){ return x.id !== p.resp; });
@@ -2737,7 +2953,7 @@ function joinUnits(from, to){
   a.members.concat(b.members).forEach(function(i){ state.people[i].group = g; });
   tidyGroups();
   changed();
-  hardMsg('✓ ' + esc(na) + ' und ' + esc(nb) + ' bekommen einen gemeinsamen Termin.');
+  hardMsg('✓ ' + esc(na) + ' und ' + esc(nb) + (isWk() ? ' sind jetzt in derselben Lektion.' : ' bekommen einen gemeinsamen Termin.'));
 }
 function chipUnder(x, y){
   var el = document.elementFromPoint(x, y), c = el && el.closest && el.closest('#hardChips .hchip');
@@ -2818,7 +3034,8 @@ $('#grid').addEventListener('change', function(e){
   var t = e.target, act = t.dataset.act;
   if (act === 'name'){
     var v = clean(t.value), p = state.people[+t.dataset.p];
-    if (v){ p.name = v; changed(null, true); if (p.resp && pollMode()) pollRename(p, v); } else t.value = p.name;
+    /* beim Wochenplan heisst nur der Eintrag anders (z. B. «Kind A»), die Klasse in der Umfrage bleibt */
+    if (v){ p.name = v; changed(null, true); if (p.resp && !p.part && pollMode()) pollRename(p, v); } else t.value = p.name;
   }
 });
 $('#grid').addEventListener('keydown', function(e){ if (e.key === 'Enter' && e.target.dataset.act === 'name') e.target.blur(); });
