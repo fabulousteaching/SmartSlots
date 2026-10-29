@@ -146,8 +146,6 @@ input[type=checkbox]{accent-color:var(--primary)}
 .dayc .dm{font-size:.84rem;color:var(--ink-2)}
 .dayc .dm b{font-weight:600;color:var(--ink)}
 .dayc.unused header{border-bottom:0}
-.dayc .drop{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between;padding:9px 16px;background:var(--maybe-bg);border-bottom:1px solid var(--line);font-size:.86rem}
-.dayc .drop .btn{min-height:30px;font-size:.82rem}
 .grid .dayh label{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
 .grid .dayh input{width:16px;height:16px;margin:0}
 .dayc.unused h3,.dayc.unused .dm{color:var(--ink-3)}
@@ -1309,15 +1307,6 @@ function solveNow(s){
     if (first >= 0){ nDays++; nGaps += gaps; nAdj += adj; }
     return { day: s.slots[q[0]].day, slots: q, first: first, last: last, used: first >= 0, gaps: gaps, adj: adj, talks: talks };
   });
-  /* Wird ein Tag nur für wenige gebraucht? Dann kann man ihn weglassen und diese Familien selbst anfragen. */
-  dayInfo.forEach(function(info, d){
-    info.lost = 0; info.only = [];
-    if (!info.used || D < 2 || info.slots.some(function(j){ return uSlot.some(function(x, u){ return x === j && pinned[u]; }); })) return;
-    var without = {};
-    days.forEach(function(q, e){ without[e] = e !== d; });
-    info.lost = K - fitCount(without);
-    info.only = free.filter(function(u){ return acc[u].length && acc[u].every(function(j){ return dayOf[j] === d; }); });
-  });
   return { slotOf: pSlot, pinned: pPinned, unitOf: unitOf, units: units, uSlot: uSlot, uPinned: pinned, holders: holders, holdersU: holdersU,
     missing: missing, nOn: P, nMaybe: nMaybe, nOpen: nOpen, cap: cap, days: dayInfo, nDays: nDays, nGaps: nGaps, nAdj: nAdj,
     anyHard: units.some(function(u){ return u.hard; }), nDaysOffered: D, proven: proven };
@@ -1486,13 +1475,7 @@ function renderPlan(r){
         if (x.us.length) return '<li class="row">' + t + '<span class="ws">' + x.us.map(function(u){ return '<span class="w"><span class="n">' + esc(unitName(r, u)) + '</span>' + tagFor(r, u, x.j) + pinFor(r, u) + '</span>'; }).join('') + '</span></li>';
         return '<li class="row ' + (x.gap ? 'gap' : 'free') + '">' + t + '<span class="ws">' + (x.gap ? '<span class="lk">Lücke</span>' : '<span class="frei">frei</span>') + '</span></li>';
       }).join('');
-      var drop = '';
-      if (d.used && d.lost > 0 && d.lost <= 3){
-        var only = d.only.length === d.lost ? 'Dieser Tag wird nur für ' + d.only.map(function(u){ return esc(unitName(r, u)); }).join(', ') + ' gebraucht.'
-          : 'Ohne diesen Tag bekämen ' + (d.lost === 1 ? '1 ' + W1() : d.lost + ' ' + WN()) + ' keinen Platz.';
-        drop = '<div class="drop"><span>' + only + '</span><button type="button" class="btn small" data-act="dropday" data-d="' + k + '">Tag weglassen</button></div>';
-      }
-      h += '<section class="dayc"><header><h3>' + esc(dayLabel(d)) + '</h3><span class="dm">' + dayMeta(d) + '</span></header>' + drop + (rows ? '<ol class="rows">' + rows + '</ol>' : '') + '</section>';
+      h += '<section class="dayc"><header><h3>' + esc(dayLabel(d)) + '</h3><span class="dm">' + dayMeta(d) + '</span></header>' + (rows ? '<ol class="rows">' + rows + '</ol>' : '') + '</section>';
     });
   }
   $('#plan').innerHTML = h || '<p class="empty">Noch keine Termine verteilt.</p>';
@@ -3052,8 +3035,6 @@ $('#summaryNote').addEventListener('click', function(e){
   changed();
 });
 $('#plan').addEventListener('click', function(e){
-  var dd = e.target.closest('button[data-act="dropday"]');
-  if (dd){ last.days[+dd.dataset.d].slots.forEach(function(j){ state.slots[j].on = false; }); changed(); return; }
   var b = e.target.closest('button[data-act="pin"]');
   if (!b) return;
   var x = +b.dataset.u, u = last.units[x], on = last.uPinned[x], j = last.uSlot[x];
