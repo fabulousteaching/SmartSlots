@@ -985,7 +985,7 @@ function setData(d, info){
   if (old && old.msg) s.msg = old.msg;
   d.slots.forEach(function(x){ s.slots.push({ id: s.nextId++, day: x.day || '', time: x.time || '', on: true }); });
   if (d.kind) s.kind = d.kind;
-  d.people.forEach(function(x){ var p = { id: s.nextId++, name: x.name, from: x.name, orig: x.key || x.name, on: true, ans: x.ans.slice() }; if (x.resp) p.resp = x.resp; if (x.part) p.part = x.part; s.people.push(p); });
+  d.people.forEach(function(x){ var p = { id: s.nextId++, name: x.name, from: x.name, orig: x.key || x.name, on: true, ans: x.ans.slice() }; if (x.resp) p.resp = x.resp; if (x.part) p.part = x.part; if (x.kid) p.kid = x.kid; s.people.push(p); });
   normalizeDays(s.slots);
   /* Bei einer eigenen Umfrage (keep) bleibt immer alles, was von Hand gemacht wurde */
   if (old && (info.keep || samePoll(old, s))){ carryOver(old, s); normalizeDays(s.slots); tidyGroups(s); }
@@ -1682,7 +1682,7 @@ function msgItems(){
       if (!p.on || j < 0) return;
       var key = p.resp || 'n:' + p.name, r0 = p.resp && poll.resp.filter(function(x){ return x.id === p.resp; })[0];
       if (!by[key]){ by[key] = { i: i, name: r0 ? clean(r0.name) : p.name, list: [] }; keys.push(key); }
-      by[key].list.push({ j: j, label: p.name !== p.from ? p.name : '' });
+      by[key].list.push({ j: j, label: p.name !== p.from ? p.name : p.kid || '' });
     });
     return keys.map(function(k){
       var g = by[k];
@@ -2362,12 +2362,12 @@ var POLL_EVERY = 20000;
 /* Spalte «location» gibt es erst mit dem neuen SQL; bis dahin geht alles andere weiter */
 function pcols(){ return 'id,token,title,intro,' + (acct.nocol.location ? '' : 'location,') + (acct.nocol.layout ? '' : 'layout,') + 'slots,allow_maybe,open,updated_at'; }
 var RESP_COLS = 'id,name,answers,comment,created_at,updated_at';
-function rcols(){ return RESP_COLS + (acct.nocol.need ? '' : ',need'); }
+function rcols(){ return RESP_COLS + (acct.nocol.need ? '' : ',need') + (acct.nocol.kids ? '' : ',kids'); }
 /* welche der später dazugekommenen Spalten fehlt? (SQL noch nicht nachgeführt) */
 function colMissing(e){
   var m = e && e.message || '';
   if (!/does not exist|could not find/i.test(m)) return '';
-  return ['location', 'layout', 'need'].filter(function(c){ return new RegExp('\\b' + c + '\\b').test(m) && !acct.nocol[c]; })[0] || '';
+  return ['location', 'layout', 'need', 'kids'].filter(function(c){ return new RegExp('\\b' + c + '\\b').test(m) && !acct.nocol[c]; })[0] || '';
 }
 async function retryCols(q){ var r = await q(), c; while (r.error && (c = colMissing(r.error))){ acct.nocol[c] = true; r = await q(); } return r; }
 function pdb(t){ return acct.client.from(t); }
@@ -2803,10 +2803,16 @@ $('#pvToggle').addEventListener('click', async function(){
 function pollWeek(){ var L = poll.row && poll.row.layout; return !!(L && L.kind === 'week'); }
 function pollData(){
   var P = poll.row, week = pollWeek(), people = [];
+  function toAns(a){ return P.slots.map(function(x){ var v = a && a[x.id]; return v === 2 ? Y : v === 1 && P.allow_maybe ? M : N; }); }
   poll.resp.forEach(function(r){
-    var base = clean(r.name) || 'Ohne Namen', ans = P.slots.map(function(x){ var v = r.answers && r.answers[x.id]; return v === 2 ? Y : v === 1 && P.allow_maybe ? M : N; });
+    var base = clean(r.name) || 'Ohne Namen', ans = toAns(r.answers);
     if (!week) return people.push({ name: base, key: 'r:' + r.id, resp: r.id, ans: ans });
-    /* Wochenplan: so viele Einträge, wie die Klasse Lektionen braucht, z. B. «3a (1)» und «3a (2)» */
+    /* Wochenplan: je Kind ein Eintrag, z. B. «Lea (3a, Muster)», mit seinem eigenen oder dem gemeinsamen Stundenplan */
+    if (Array.isArray(r.kids) && r.kids.length) return r.kids.slice(0, 20).forEach(function(kd, i){
+      var kn = clean(kd && kd.name) || 'Kind ' + (i + 1);
+      people.push({ name: kn + ' (' + base + ')', kid: kn, key: 'r:' + r.id + ':' + (i + 1), resp: r.id, part: i + 1, ans: kd && kd.answers && typeof kd.answers === 'object' ? toAns(kd.answers) : ans.slice() });
+    });
+    /* ältere Antworten ohne Namen: so viele Einträge, wie Lektionen nötig sind, z. B. «3a (1)» und «3a (2)» */
     var n = Math.max(1, Math.min(20, Math.round(+r.need || 1)));
     for (var k = 1; k <= n; k++) people.push({ name: n > 1 ? base + ' (' + k + ')' : base, key: 'r:' + r.id + ':' + k, resp: r.id, part: k, ans: ans.slice() });
   });

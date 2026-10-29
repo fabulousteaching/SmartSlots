@@ -101,6 +101,16 @@ input[type=text]:focus,textarea:focus{outline:none;border-color:var(--accent);bo
 .week td.na{height:44px;border-radius:9px;background:repeating-linear-gradient(135deg,transparent 0 6px,var(--surface-3) 6px 12px)}
 .wkfill{margin:10px 0 0;font-size:.88rem;color:var(--ink-2)}
 .wkfill button{border:0;background:none;padding:0;color:var(--ink-2);text-decoration:underline;cursor:pointer;font:inherit;font-weight:600}
+.kmode{border:0;padding:0;margin:20px 0 0}
+.kmode legend{padding:0 0 6px;font-size:.92rem;font-weight:600;color:var(--ink-2)}
+.rad{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;margin:0 0 8px;border:1px solid var(--line-2);border-radius:12px;cursor:pointer;font-weight:500;color:var(--ink)}
+.rad input{margin:3px 0 0;width:18px;height:18px;accent-color:var(--primary)}
+.rad:has(input:checked){border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+#kidNames .kn{display:flex;flex-direction:column;gap:5px;margin:0 0 10px}
+#kidNames .kn span{font-size:.86rem;font-weight:600;color:var(--ink-2)}
+#kidNames input.missing{border-color:var(--warn);box-shadow:0 0 0 3px var(--warn-bg)}
+.wtab{margin:22px 0 0}
+.wtab h2{margin:0;font-size:1.05rem;font-weight:650}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 select{min-height:46px;padding:.4em .7em;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);font-size:1rem;color:var(--ink)}
 select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
@@ -153,7 +163,14 @@ select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--
   <p class="intro" id="intro" hidden></p>
   <div class="msg" id="again" hidden>Sie haben schon geantwortet. Hier können Sie Ihre Antwort ändern.</div>
   <label class="fld"><span id="nameLab">Nachname</span><input type="text" id="name" maxlength="120" autocomplete="family-name" placeholder="z. B. Meier"></label>
-  <label class="fld" id="needRow" hidden><span>Anzahl Lektionen pro Woche</span><select id="need"><option value="">bitte wählen</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></label>
+  <div id="kidsBox" hidden>
+    <label class="fld"><span>Für wie viele Kinder der Klasse wird eine Lektion gesucht?</span><select id="need"><option value="">bitte wählen</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></label>
+    <fieldset class="fld kmode" id="modeRow" hidden><legend>Wie sollen die Stundenpläne ausgefüllt werden?</legend>
+      <label class="rad"><input type="radio" name="kmode" value="sep"><span>Für jedes Kind einen eigenen Stundenplan</span></label>
+      <label class="rad"><input type="radio" name="kmode" value="one"><span>Ein gemeinsamer Stundenplan für alle Kinder</span></label>
+    </fieldset>
+    <div class="fld" id="kidNames" hidden></div>
+  </div>
   <p class="how" id="how">Bitte geben Sie bei jedem Termin an, ob er für Sie passt.</p>
   <div id="days"></div>
   <label class="fld"><span>Bemerkung <i>(freiwillig)</i></span><textarea id="comment" maxlength="1000" rows="3"></textarea></label>
@@ -191,7 +208,8 @@ function errText(e){
   if (/poll_closed/.test(m)) return 'Diese Umfrage ist inzwischen geschlossen. Antworten sind nicht mehr möglich.';
   if (/poll_not_found/.test(m)) return 'Diese Umfrage gibt es nicht mehr.';
   if (/bad_name/.test(m)) return 'Bitte geben Sie Ihren Namen ein.';
-  if (/bad_need/.test(m)) return 'Bitte wählen Sie, wie viele Lektionen pro Woche es braucht.';
+  if (/bad_need/.test(m)) return 'Bitte wählen Sie, für wie viele Kinder eine Lektion gesucht wird.';
+  if (/bad_kids/.test(m)) return 'Bitte geben Sie die Namen aller Kinder an (höchstens 60 Zeichen).';
   if (/too_many/.test(m)) return 'Es sind bereits sehr viele Antworten eingegangen. Bitte melden Sie sich direkt beim Administrator.';
   if (/failed to fetch|networkerror|load failed|network request failed/i.test(m)) return 'Keine Verbindung. Bitte prüfen Sie die Internetverbindung und versuchen Sie es nochmals.';
   return 'Das hat leider nicht geklappt. Bitte versuchen Sie es nochmals. (' + m + ')';
@@ -216,25 +234,60 @@ function cellSet(b, v){
   b.textContent = v == null ? '' : WSYM[v];
   b.setAttribute('aria-label', b.dataset.label + ': ' + (v == null ? 'noch offen' : WWORD[v]));
 }
-/* Wochenplan: Tabelle mit Lektionen (Zeilen) und Wochentagen (Spalten); gesperrte Lektionen sind grau */
+/* Wochenplan: zuerst Anzahl Kinder, ab zwei Kindern eigene Stundenpläne oder ein gemeinsamer, dann die Namen.
+   Ein Stundenplan ist eine Tabelle mit Lektionen (Zeilen) und Wochentagen (Spalten); gesperrte Lektionen sind grau. */
+var wk = { n: 0, mode: '', names: [], tables: [] };
+function wkCount(){ return wk.n >= 2 ? (wk.mode === 'sep' ? wk.n : wk.mode === 'one' ? 1 : 0) : wk.n === 1 ? 1 : 0; }
+function kidName(i){ return clean(wk.names[i]) || 'Kind ' + (i + 1); }
+function kidNames(){ var out = []; for (var i = 0; i < wk.n; i++) out.push(kidName(i)); return out; }
+function andList(a){ return a.length > 1 ? a.slice(0, -1).join(', ') + ' und ' + a[a.length - 1] : a.join(''); }
+function wkTitle(t){
+  if (wkCount() > 1) return 'Stundenplan für ' + kidName(t);
+  if (wk.n > 1) return 'Gemeinsamer Stundenplan für ' + andList(kidNames());
+  return 'Stundenplan' + (clean(wk.names[0]) ? ' für ' + clean(wk.names[0]) : '');
+}
+function wkTitles(){ [].forEach.call(document.querySelectorAll('.wtab h2'), function(h, t){ h.textContent = wkTitle(t); }); }
+function renderKids(){
+  $('#modeRow').hidden = !(wk.n >= 2);
+  [].forEach.call(document.querySelectorAll('input[name="kmode"]'), function(r){ r.checked = r.value === wk.mode; });
+  var h = wk.n ? '<span>' + (wk.n > 1 ? 'Namen der Kinder' : 'Name des Kindes') + '</span>' : '';
+  for (var i = 0; i < wk.n; i++) h += '<label class="kn"><span>Kind ' + (i + 1) + '</span><input type="text" data-k="' + i + '" maxlength="60" autocomplete="off" placeholder="Vorname" value="' + esc(wk.names[i] || '') + '"></label>';
+  $('#kidNames').innerHTML = h;
+  $('#kidNames').hidden = !wk.n;
+  renderWeek();
+}
 function renderWeek(){
-  var L = poll.layout, have = {}, ans = mine && mine.answers || {};
+  var L = poll.layout, have = {}, T = wkCount();
+  if (!T){
+    $('#days').innerHTML = '<p class="how">' + (wk.n ? 'Bitte zuerst wählen, wie die Stundenpläne ausgefüllt werden.' : 'Bitte zuerst angeben, für wie viele Kinder eine Lektion gesucht wird.') + '</p>';
+    return;
+  }
   poll.slots.forEach(function(s){ have[s.id] = s; });
   var h = '<div class="wkhelp" aria-hidden="true"><span class="lg"><i class="y">✓</i>passt</span>' + (poll.allow_maybe ? '<span class="lg"><i class="m">~</i>wenn\'s sein muss</span>' : '') + '<span class="lg"><i class="n">✕</i>passt nicht</span></div>';
-  h += '<table class="week"><thead><tr><th scope="col"><span class="sr">Lektion</span></th>' + L.days.map(function(d){ return '<th scope="col" title="' + esc(WD_NAMES[d] || '') + '">' + esc(WD_SHORT[d] || '') + '</th>'; }).join('') + '</tr></thead><tbody>';
-  L.periods.forEach(function(p){
-    h += '<tr><th scope="row" class="wt">' + esc(p.from) + '<br>' + esc(p.to) + '</th>' + L.days.map(function(d){
-      var id = d + '-' + p.id;
-      if (!have[id]) return '<td class="na"><span class="sr">nicht verfügbar</span></td>';
-      return '<td><button type="button" class="wc" data-id="' + esc(id) + '" data-label="' + esc((WD_NAMES[d] || '') + ', ' + p.from + '–' + p.to) + '"></button></td>';
-    }).join('') + '</tr>';
-  });
-  h += '</tbody></table><p class="wkfill">Alle offenen Felder: <button type="button" data-fill="2">passt</button> · <button type="button" data-fill="0">passt nicht</button></p>';
+  for (var t = 0; t < T; t++){
+    wk.tables[t] = wk.tables[t] || {};
+    h += '<section class="wtab" data-t="' + t + '"><h2>' + esc(wkTitle(t)) + '</h2><table class="week"><thead><tr><th scope="col"><span class="sr">Lektion</span></th>' + L.days.map(function(d){ return '<th scope="col" title="' + esc(WD_NAMES[d] || '') + '">' + esc(WD_SHORT[d] || '') + '</th>'; }).join('') + '</tr></thead><tbody>';
+    L.periods.forEach(function(p){
+      h += '<tr><th scope="row" class="wt">' + esc(p.from) + '<br>' + esc(p.to) + '</th>' + L.days.map(function(d){
+        var id = d + '-' + p.id;
+        if (!have[id]) return '<td class="na"><span class="sr">nicht verfügbar</span></td>';
+        return '<td><button type="button" class="wc" data-t="' + t + '" data-id="' + esc(id) + '" data-label="' + esc((WD_NAMES[d] || '') + ', ' + p.from + '–' + p.to) + '"></button></td>';
+      }).join('') + '</tr>';
+    });
+    h += '</tbody></table><p class="wkfill">Alle offenen Felder: <button type="button" data-t="' + t + '" data-fill="2">passt</button> · <button type="button" data-t="' + t + '" data-fill="0">passt nicht</button></p></section>';
+  }
   $('#days').innerHTML = h;
-  [].forEach.call(document.querySelectorAll('.wc'), function(b){
-    var a = ans[b.dataset.id];
-    cellSet(b, !mine ? null : a === 2 ? 2 : a === 1 && poll.allow_maybe ? 1 : 0);
-  });
+  [].forEach.call(document.querySelectorAll('.wc'), function(b){ var v = wk.tables[+b.dataset.t][b.dataset.id]; cellSet(b, v == null ? null : v); });
+}
+function wkFromMine(){
+  var kids = mine && Array.isArray(mine.kids) ? mine.kids : null, ans = mine && mine.answers || {};
+  function norm(a){ var o = {}; Object.keys(a || {}).forEach(function(k){ var v = a[k]; o[k] = v === 2 ? 2 : v === 1 && poll.allow_maybe ? 1 : 0; }); return o; }
+  wk = { n: 0, mode: '', names: [], tables: [] };
+  if (!mine) return;
+  wk.n = kids ? kids.length : +mine.need || 1;
+  wk.names = kids ? kids.map(function(k){ return k.name || ''; }) : [];
+  if (kids && kids.some(function(k){ return k.answers; })){ wk.mode = 'sep'; wk.tables = kids.map(function(k){ return norm(k.answers); }); }
+  else { wk.mode = wk.n > 1 ? 'one' : ''; wk.tables = [norm(ans)]; }
 }
 /* Termine nach Tagen, wie vom Administrator angelegt */
 function groups(){
@@ -256,15 +309,14 @@ function render(){
   $('#nameLab').textContent = week ? 'Klasse und Lehrperson' : 'Nachname';
   $('#name').placeholder = week ? 'z. B. 3a, Muster' : 'z. B. Meier';
   $('#name').setAttribute('autocomplete', week ? 'off' : 'family-name');
-  $('#needRow').hidden = !week;
-  $('#need').value = week && mine && mine.need ? String(mine.need) : '';
+  $('#kidsBox').hidden = !week;
   $('#how').textContent = week
     ? 'Tippen Sie auf jede Lektion, bis die Farbe stimmt: grün = passt' + (poll.allow_maybe ? ', orange = wenn\'s sein muss' : '') + ', rot = passt nicht. Grau ist nicht verfügbar.'
     : poll.allow_maybe ? 'Bitte geben Sie bei jedem Termin an, ob er für Sie passt. «Wenn nötig» heisst: Termin ist machbar, aber nicht erste Wahl.' : 'Bitte geben Sie bei jedem Termin an, ob er für Sie passt.';
   if (mine){ $('#name').value = mine.name || ''; $('#comment').value = mine.comment || ''; }
   $('#again').hidden = !mine;
   $('#send').textContent = mine ? 'Änderung speichern' : 'Antwort senden';
-  if (week) return renderWeek();
+  if (week){ wkFromMine(); $('#need').value = wk.n ? String(wk.n) : ''; return renderKids(); }
   var ans = mine && mine.answers || {};
   $('#days').innerHTML = groups().map(function(g, k){
     return '<fieldset class="day"><legend><span>' + esc(g.day || 'Termine') + '</span><span class="dayacts"><button type="button" class="allyes" data-g="' + k + '">alle Ja</button><button type="button" class="allno" data-g="' + k + '">alle Nein</button></span></legend>' + g.slots.map(function(s){
@@ -278,10 +330,7 @@ function render(){
 }
 function answers(){
   var out = {};
-  if (isWeek()){
-    [].forEach.call(document.querySelectorAll('.wc'), function(b){ out[b.dataset.id] = b.dataset.v === '' ? null : +b.dataset.v; });
-    return out;
-  }
+  if (isWeek()) return wk.tables[0] || {};
   poll.slots.forEach(function(s){
     var c = document.querySelector('input[name="s_' + CSS.escape(s.id) + '"]:checked');
     out[s.id] = c ? +c.value : null;
@@ -291,10 +340,15 @@ function answers(){
 function summary(a){
   var yes = [], maybe = [];
   if (isWeek()){
-    poll.slots.forEach(function(s){ var t = s.day + ', ' + s.time; if (a[s.id] === 2) yes.push(t); else if (a[s.id] === 1) maybe.push(t); });
-    $('#sum').innerHTML = yes.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('') + maybe.map(function(t){ return '<li>' + esc(t) + ' <span class="m">(wenn\'s sein muss)</span></li>'; }).join('');
-    var n = mine && mine.need || 1;
-    $('#doneText').textContent = 'Ihre Antwort ist gespeichert: ' + n + (n === 1 ? ' Lektion' : ' Lektionen') + ' pro Woche. ' + (yes.length || maybe.length ? 'Passend sind:' : 'Sie haben keine Lektion als passend markiert; der Administrator meldet sich bei Ihnen.');
+    wkFromMine();
+    var T = wkCount() || 1, lines = [];
+    for (var t = 0; t < T; t++){
+      var tb = wk.tables[t] || {}, y = 0, m = 0;
+      Object.keys(tb).forEach(function(k){ if (tb[k] === 2) y++; else if (tb[k] === 1) m++; });
+      lines.push(wkTitle(t) + ': ' + (y === 1 ? '1 Lektion passt' : y + ' Lektionen passen') + (m ? ', ' + m + ' wenn\'s sein muss' : ''));
+    }
+    $('#sum').innerHTML = lines.map(function(t){ return '<li>' + esc(t) + '</li>'; }).join('');
+    $('#doneText').textContent = 'Ihre Antwort ist gespeichert. Gesucht wird eine Lektion für ' + andList(kidNames()) + '.';
     return;
   }
   poll.slots.forEach(function(s){ var t = (s.day ? s.day + ', ' : '') + s.time; if (a[s.id] === 2) yes.push(t); else if (a[s.id] === 1) maybe.push(t); });
@@ -313,30 +367,55 @@ $('#days').addEventListener('change', function(e){ var sl = e.target.closest('.s
 $('#days').addEventListener('click', function(e){
   var b = e.target.closest('.wc'), f = e.target.closest('button[data-fill]');
   if (b){
-    var v = b.dataset.v === '' ? null : +b.dataset.v;
-    cellSet(b, v == null ? 2 : v === 2 ? (poll.allow_maybe ? 1 : 0) : v === 1 ? 0 : 2);
+    var v = b.dataset.v === '' ? null : +b.dataset.v, nv = v == null ? 2 : v === 2 ? (poll.allow_maybe ? 1 : 0) : v === 1 ? 0 : 2;
+    cellSet(b, nv);
+    wk.tables[+b.dataset.t][b.dataset.id] = nv;
     b.classList.remove('missing');
-  } else if (f) [].forEach.call(document.querySelectorAll('.wc'), function(x){ if (x.dataset.v === ''){ cellSet(x, +f.dataset.fill); } });
+  } else if (f) [].forEach.call(document.querySelectorAll('.wc[data-t="' + f.dataset.t + '"]'), function(x){
+    if (x.dataset.v === ''){ cellSet(x, +f.dataset.fill); wk.tables[+x.dataset.t][x.dataset.id] = +f.dataset.fill; x.classList.remove('missing'); }
+  });
+});
+$('#need').addEventListener('change', function(){
+  wk.n = +this.value || 0;
+  if (wk.n < 2) wk.mode = '';
+  renderKids();
+});
+$('#modeRow').addEventListener('change', function(e){
+  if (e.target.name !== 'kmode') return;
+  wk.mode = e.target.value;
+  /* von gemeinsam zu eigenen Stundenplänen: das bisher Ausgefüllte als Vorlage für alle Kinder */
+  if (wk.mode === 'sep') for (var i = 1; i < wk.n; i++) if (!wk.tables[i] || !Object.keys(wk.tables[i]).length) wk.tables[i] = Object.assign({}, wk.tables[0] || {});
+  renderWeek();
+});
+$('#kidNames').addEventListener('input', function(e){
+  var inp = e.target.closest('input[data-k]');
+  if (!inp) return;
+  wk.names[+inp.dataset.k] = inp.value;
+  inp.classList.remove('missing');
+  wkTitles();
 });
 $('#form').addEventListener('submit', async function(e){
   e.preventDefault();
   var name = clean($('#name').value), a = answers(), msg = $('#msg');
   msg.hidden = true;
-  var week = isWeek(), need = +$('#need').value;
-  if (!name){ msg.textContent = week ? 'Bitte geben Sie Klasse und Lehrperson an.' : 'Bitte geben Sie Ihren Nachnamen ein.'; msg.hidden = false; $('#name').focus(); return; }
-  if (week && !(need >= 1)){ msg.textContent = 'Bitte wählen Sie, wie viele Lektionen pro Woche es braucht.'; msg.hidden = false; $('#need').focus(); return; }
-  /* jeder Termin braucht eine Antwort */
-  var open = poll.slots.filter(function(x){ return a[x.id] === null; });
+  var week = isWeek(), need = wk.n, T = wkCount();
+  function stop(text, el){ msg.textContent = text; msg.hidden = false; if (el){ el.scrollIntoView({ behavior: 'smooth', block: 'center' }); if (el.focus) el.focus({ preventScroll: true }); } }
+  if (!name) return stop(week ? 'Bitte geben Sie Klasse und Lehrperson an.' : 'Bitte geben Sie Ihren Nachnamen ein.', $('#name'));
   if (week){
-    [].forEach.call(document.querySelectorAll('.wc'), function(b){ b.classList.toggle('missing', b.dataset.v === ''); });
-    if (open.length){
-      msg.textContent = (open.length === 1 ? 'Eine Lektion ist' : open.length + ' Lektionen sind') + ' noch offen (rot umrandet). Bitte antippen, oder unten «Alle offenen Felder» nutzen.';
-      msg.hidden = false;
-      document.querySelector('.wc.missing').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
+    if (!(need >= 1)) return stop('Bitte wählen Sie, für wie viele Kinder eine Lektion gesucht wird.', $('#need'));
+    if (!T) return stop('Bitte wählen Sie, ob jedes Kind einen eigenen Stundenplan bekommt oder ob ein gemeinsamer reicht.', $('#modeRow'));
+    var noName = [];
+    [].forEach.call(document.querySelectorAll('#kidNames input'), function(inp, i){ var bad = !clean(wk.names[i]); inp.classList.toggle('missing', bad); if (bad) noName.push(inp); });
+    if (noName.length) return stop(need > 1 ? 'Bitte geben Sie die Namen aller Kinder an.' : 'Bitte geben Sie den Namen des Kindes an.', noName[0]);
+    var openN = 0;
+    [].forEach.call(document.querySelectorAll('.wc'), function(b){ var bad = b.dataset.v === ''; b.classList.toggle('missing', bad); if (bad) openN++; });
+    if (openN) return stop((openN === 1 ? 'Eine Lektion ist' : openN + ' Lektionen sind') + ' noch offen (rot umrandet). Bitte antippen, oder «Alle offenen Felder» nutzen.', document.querySelector('.wc.missing'));
+    a = {};
+    for (var t = 0; t < T; t++) Object.keys(wk.tables[t]).forEach(function(k){ a[k] = Math.max(a[k] || 0, wk.tables[t][k]); });
   }
-  else [].forEach.call(document.querySelectorAll('.slot'), function(x, k){ x.classList.toggle('missing', a[poll.slots[k].id] === null); });
+  /* jeder Termin braucht eine Antwort */
+  var open = week ? [] : poll.slots.filter(function(x){ return a[x.id] === null; });
+  if (!week) [].forEach.call(document.querySelectorAll('.slot'), function(x, k){ x.classList.toggle('missing', a[poll.slots[k].id] === null); });
   if (open.length){
     msg.textContent = (open.length === 1 ? 'Bei einem Termin fehlt' : 'Bei ' + open.length + ' Terminen fehlt') + ' noch die Antwort (Ja' + (poll.allow_maybe ? ', Wenn nötig' : '') + ' oder Nein). ' + (open.length === 1 ? 'Der Termin ist' : 'Die Termine sind') + ' rot umrandet.';
     msg.hidden = false;
@@ -347,12 +426,17 @@ $('#form').addEventListener('submit', async function(e){
   var me = stored(), btn = $('#send');
   btn.disabled = true;
   var args = { p_token: token, p_name: name, p_answers: a, p_comment: $('#comment').value.slice(0, 1000), p_id: mine && me ? me.id : null, p_edit: mine && me ? me.edit : null };
-  if (week) args.p_need = need;   // nur beim Wochenplan, damit Termin-Umfragen auch mit älterem SQL gehen
+  /* nur beim Wochenplan, damit Termin-Umfragen auch mit älterem SQL gehen */
+  if (week){
+    var kids = kidNames().map(function(x, i){ var k = { name: clean(wk.names[i]).slice(0, 60) }; if (T > 1) k.answers = wk.tables[i]; return k; });
+    args.p_answers = T > 1 ? {} : wk.tables[0];
+    args.p_need = need; args.p_kids = kids;
+  }
   var r = await client.rpc('poll_answer', args);
   btn.disabled = false;
   if (r.error){ msg.textContent = errText(r.error); msg.hidden = false; return; }
   store({ id: r.data.id, edit: r.data.edit });
-  mine = { name: name, answers: a, comment: $('#comment').value, need: week ? need : null };
+  mine = { name: name, answers: week ? args.p_answers : a, comment: $('#comment').value, need: week ? need : null, kids: week ? args.p_kids : null };
   summary(a);
   show('#done');
 });

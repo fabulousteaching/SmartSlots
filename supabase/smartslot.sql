@@ -89,6 +89,8 @@ alter table public.polls add column if not exists location text not null default
 -- Wochenplan (Stundenplan): Aufbau der Woche in der Umfrage, Anzahl Lektionen in jeder Antwort (kam später dazu)
 alter table public.polls add column if not exists layout jsonb check (layout is null or jsonb_typeof(layout) = 'object');
 alter table public.poll_responses add column if not exists need int check (need is null or need between 1 and 20);
+-- Wochenplan: die Kinder einer Klasse, je mit Namen und (bei eigenen Stundenplänen) eigenen Antworten
+alter table public.poll_responses add column if not exists kids jsonb check (kids is null or jsonb_typeof(kids) = 'array');
 
 alter table public.polls enable row level security;
 alter table public.poll_responses enable row level security;
@@ -96,7 +98,7 @@ revoke all on public.polls from anon, authenticated;
 revoke all on public.poll_responses from anon, authenticated;
 grant select, insert, update, delete on public.polls to authenticated;
 -- Die Lehrperson liest die Antworten (ohne den Schlüssel, mit dem Eltern ihre Antwort ändern) und kann sie löschen
-grant select (id, poll_id, name, answers, comment, need, created_at, updated_at) on public.poll_responses to authenticated;
+grant select (id, poll_id, name, answers, comment, need, kids, created_at, updated_at) on public.poll_responses to authenticated;
 grant delete on public.poll_responses to authenticated;
 -- Den Namen darf die Lehrperson anpassen (die Eltern sehen dann den neuen Namen), sonst nichts
 grant update (name) on public.poll_responses to authenticated;
@@ -160,52 +162,83 @@ language sql stable security definer set search_path = '' as $$
   from public.polls p where p.token = p_token;
 $$;
 
--- Für die Eltern: antworten, oder mit p_id und p_edit die eigene Antwort ändern.
--- Beim Wochenplan gibt p_need an, wie viele Lektionen es braucht.
-drop function if exists public.poll_answer(text, text, jsonb, text, uuid, uuid);
-create or replace function public.poll_answer(p_token text, p_name text, p_answers jsonb,
-  p_comment text default '', p_id uuid default null, p_edit uuid default null, p_need int default null) returns jsonb
-language plpgsql security definer set search_path = '' as $$
+-- Antworten prüfen: nur Termine dieser Umfrage, nur 0 (nein), 1 (wenn nötig), 2 (ja)
+create or replace function public.poll_clean(p_slots jsonb, p_answers jsonb, p_maybe boolean) returns jsonb
+language plpgsql immutable set search_path = '' as $$
 declare
-  v_poll public.polls;
-  v_row public.poll_responses;
   v_ans jsonb := '{}'::jsonb;
   v_slot jsonb;
   v_key text;
   v_val int;
-  v_name text := btrim(coalesce(p_name, ''));
-  v_need int := null;
 begin
-  select * into v_poll from public.polls where token = p_token;
-  if not found then raise exception 'poll_not_found'; end if;
-  if not v_poll.open then raise exception 'poll_closed'; end if;
-  if char_length(v_name) < 1 or char_length(v_name) > 120 then raise exception 'bad_name'; end if;
   if p_answers is null or jsonb_typeof(p_answers) <> 'object' then raise exception 'bad_answer'; end if;
-  if v_poll.layout ->> 'kind' = 'week' then
-    if p_need is null or p_need < 1 or p_need > 20 then raise exception 'bad_need'; end if;
-    v_need := p_need;
-  end if;
-  -- nur Termine dieser Umfrage, nur 0 (nein), 1 (wenn nötig), 2 (ja)
-  for v_slot in select value from jsonb_array_elements(v_poll.slots) loop
+  for v_slot in select value from jsonb_array_elements(p_slots) loop
     v_key := v_slot ->> 'id';
     if v_key is not null and p_answers ? v_key then
       if jsonb_typeof(p_answers -> v_key) <> 'number' then raise exception 'bad_answer'; end if;
       v_val := (p_answers ->> v_key)::numeric::int;
       if v_val not in (0, 1, 2) then raise exception 'bad_answer'; end if;
-      if v_val = 1 and not v_poll.allow_maybe then v_val := 0; end if;
+      if v_val = 1 and not p_maybe then v_val := 0; end if;
       v_ans := v_ans || jsonb_build_object(v_key, v_val);
     end if;
   end loop;
+  return v_ans;
+end;
+$$;
+revoke all on function public.poll_clean(jsonb, jsonb, boolean) from public;
+
+-- Für die Eltern: antworten, oder mit p_id und p_edit die eigene Antwort ändern.
+-- Beim Wochenplan nennt p_kids die Kinder (Name, bei eigenen Stundenplänen auch Antworten); p_need gilt nur für ältere Seiten.
+drop function if exists public.poll_answer(text, text, jsonb, text, uuid, uuid);
+drop function if exists public.poll_answer(text, text, jsonb, text, uuid, uuid, int);
+create or replace function public.poll_answer(p_token text, p_name text, p_answers jsonb,
+  p_comment text default '', p_id uuid default null, p_edit uuid default null, p_need int default null, p_kids jsonb default null) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_poll public.polls;
+  v_row public.poll_responses;
+  v_ans jsonb;
+  v_name text := btrim(coalesce(p_name, ''));
+  v_need int := null;
+  v_kids jsonb := null;
+  v_kid jsonb;
+  v_kname text;
+begin
+  select * into v_poll from public.polls where token = p_token;
+  if not found then raise exception 'poll_not_found'; end if;
+  if not v_poll.open then raise exception 'poll_closed'; end if;
+  if char_length(v_name) < 1 or char_length(v_name) > 120 then raise exception 'bad_name'; end if;
+  v_ans := public.poll_clean(v_poll.slots, p_answers, v_poll.allow_maybe);
+  if v_poll.layout ->> 'kind' = 'week' then
+    if p_kids is not null then
+      if jsonb_typeof(p_kids) <> 'array' or jsonb_array_length(p_kids) < 1 or jsonb_array_length(p_kids) > 20 then raise exception 'bad_kids'; end if;
+      v_kids := '[]'::jsonb;
+      for v_kid in select value from jsonb_array_elements(p_kids) loop
+        if jsonb_typeof(v_kid) <> 'object' then raise exception 'bad_kids'; end if;
+        v_kname := btrim(coalesce(v_kid ->> 'name', ''));
+        if char_length(v_kname) < 1 or char_length(v_kname) > 60 then raise exception 'bad_kids'; end if;
+        if jsonb_typeof(v_kid -> 'answers') = 'object' then
+          v_kids := v_kids || jsonb_build_array(jsonb_build_object('name', v_kname, 'answers', public.poll_clean(v_poll.slots, v_kid -> 'answers', v_poll.allow_maybe)));
+        else
+          v_kids := v_kids || jsonb_build_array(jsonb_build_object('name', v_kname));
+        end if;
+      end loop;
+      v_need := jsonb_array_length(v_kids);
+    else
+      if p_need is null or p_need < 1 or p_need > 20 then raise exception 'bad_need'; end if;
+      v_need := p_need;
+    end if;
+  end if;
   if p_id is not null then
     update public.poll_responses
-      set name = v_name, answers = v_ans, comment = left(coalesce(p_comment, ''), 1000), need = v_need, updated_at = now()
+      set name = v_name, answers = v_ans, comment = left(coalesce(p_comment, ''), 1000), need = v_need, kids = v_kids, updated_at = now()
       where id = p_id and poll_id = v_poll.id and edit_token = p_edit
       returning * into v_row;
     if not found then raise exception 'not_found'; end if;
   else
     if (select count(*) from public.poll_responses where poll_id = v_poll.id) >= 1000 then raise exception 'too_many'; end if;
-    insert into public.poll_responses (poll_id, name, answers, comment, need)
-      values (v_poll.id, v_name, v_ans, left(coalesce(p_comment, ''), 1000), v_need)
+    insert into public.poll_responses (poll_id, name, answers, comment, need, kids)
+      values (v_poll.id, v_name, v_ans, left(coalesce(p_comment, ''), 1000), v_need, v_kids)
       returning * into v_row;
   end if;
   return jsonb_build_object('id', v_row.id, 'edit', v_row.edit_token);
@@ -215,16 +248,16 @@ $$;
 -- Für die Eltern: die eigene Antwort wieder laden, um sie zu ändern
 create or replace function public.poll_mine(p_token text, p_id uuid, p_edit uuid) returns jsonb
 language sql stable security definer set search_path = '' as $$
-  select jsonb_build_object('name', r.name, 'answers', r.answers, 'comment', r.comment, 'need', r.need)
+  select jsonb_build_object('name', r.name, 'answers', r.answers, 'comment', r.comment, 'need', r.need, 'kids', r.kids)
   from public.poll_responses r join public.polls p on p.id = r.poll_id
   where p.token = p_token and r.id = p_id and r.edit_token = p_edit;
 $$;
 
 revoke all on function public.poll_get(text) from public;
-revoke all on function public.poll_answer(text, text, jsonb, text, uuid, uuid, int) from public;
+revoke all on function public.poll_answer(text, text, jsonb, text, uuid, uuid, int, jsonb) from public;
 revoke all on function public.poll_mine(text, uuid, uuid) from public;
 grant execute on function public.poll_get(text) to anon, authenticated;
-grant execute on function public.poll_answer(text, text, jsonb, text, uuid, uuid, int) to anon, authenticated;
+grant execute on function public.poll_answer(text, text, jsonb, text, uuid, uuid, int, jsonb) to anon, authenticated;
 grant execute on function public.poll_mine(text, uuid, uuid) to anon, authenticated;
 
 -- Supabase sofort über die neuen Tabellen und Funktionen informieren
