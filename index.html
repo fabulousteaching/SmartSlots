@@ -174,6 +174,23 @@ input[type=checkbox]{accent-color:var(--primary)}
 .empty{color:var(--ink-3)}
 .tag.grp{background:var(--surface-3);color:var(--ink-2)}
 .tag.hard{background:var(--hard-bg);color:var(--hard)}
+.msgbox{margin:0 0 14px;border:1px solid var(--accent-line);border-radius:14px;padding:16px;background:var(--surface)}
+.msghead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px}
+.msghead h3{font-size:1rem;font-weight:650}
+.msgopts{display:flex;flex-wrap:wrap;gap:12px 28px;margin-bottom:14px}
+.mopt{display:flex;flex-direction:column;gap:6px;font-size:.84rem;font-weight:600;color:var(--ink-2)}
+.mfields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 16px}
+.msgbox .fld{margin:0 0 12px}
+.msgbox input[type=text],.msgbox textarea{min-height:42px;padding:.45em .7em;font-size:.95rem;font-weight:400;color:var(--ink)}
+.msgbox textarea{font-family:var(--font);line-height:1.45;resize:vertical}
+.msgbox .hint{margin:-4px 0 12px}
+.mprev{padding:12px 14px;border-radius:12px;background:var(--surface-2);font-size:.92rem}
+.mprev pre{margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;color:var(--ink)}
+.mlist{list-style:none;margin:14px 0 0;padding:0;border-top:1px solid var(--line)}
+.mlist li{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.mlist .mn{font-weight:600;min-width:9em}
+.mlist .mt{flex:1;color:var(--ink-2)}
+.mlist .btn{min-height:30px;font-size:.82rem}
 .hardbox{margin:0 0 14px;border:1px solid var(--line);border-radius:14px;padding:4px 16px;background:var(--surface)}
 .hardbox[open]{padding-bottom:14px}
 .hardbox summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;font-weight:600;font-size:.93rem;padding:9px 0}
@@ -423,7 +440,7 @@ input[type=date],input[type=time]{font:inherit}
 @media (prefers-reduced-motion: reduce){ .spin{animation:none} }
 @media print{
   body{background:#fff;color:#000;font-size:11pt}
-  .lead,#stepLoad,#stepGrid,.tools,.mode-hint,.hardbox,.foot,.pin,.missing .tip,#stepPlan > .hint,.num,.acct,.slotbar,.guestbar,.savetoast{display:none !important}
+  .lead,#stepLoad,#stepGrid,.tools,.mode-hint,.hardbox,.foot,.pin,.missing .tip,#stepPlan > .hint,.num,.acct,.slotbar,.guestbar,.savetoast,.msgbox{display:none !important}
   .top{padding:0 0 6px}
   .card{border:0;box-shadow:none;padding:0;margin:8px 0;background:none}
   .kpi,.missing,.dayc{background:none !important;border:1px solid #bbb}
@@ -507,6 +524,7 @@ input[type=date],input[type=time]{font:inherit}
     <div class="amsg" id="pollGuest" hidden><p>Eigene Umfragen gibt es mit einem Konto: Termine vorschlagen, den Link an die Eltern schicken, und jede Antwort erscheint hier automatisch.</p><p><button type="button" class="btn small primary" id="pollLoginBtn">Anmelden oder Konto erstellen</button></p></div>
     <form class="pollform" id="pollForm" novalidate hidden>
       <label class="fld"><span>Titel für die Eltern</span><input type="text" id="pTitle" maxlength="200" autocomplete="off"></label>
+      <label class="fld"><span>Ort</span><input type="text" id="pPlace" maxlength="200" autocomplete="off" placeholder="z. B. Schulzimmer 12, Schulhaus Mattenhof"></label>
       <label class="fld"><span>Nachricht an die Eltern <i>(freiwillig)</i></span><textarea id="pIntro" rows="3" maxlength="2000" placeholder="z. B. Bitte geben Sie an, welche Zeiten für Sie passen. Ein Gespräch dauert 20 Minuten."></textarea></label>
       <div class="fld"><span>Termine</span>
         <div class="ppause"><span id="pPauseLab">Pause zwischen den Gesprächen</span>
@@ -556,7 +574,27 @@ input[type=date],input[type=time]{font:inherit}
     <button class="btn small" type="button" id="copyBtn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Liste kopieren</span></button>
     <button class="btn small" type="button" id="csvBtn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 20h14"/></svg><span>Für Excel</span></button>
     <button class="btn small" type="button" id="printBtn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="6" rx="1"/></svg><span>Drucken</span></button>
+    <button class="btn small" type="button" id="msgBtn" disabled title="Verfügbar, sobald alle einen Termin haben"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/></svg><span>Nachrichten</span></button>
   </div>
+  <section class="msgbox" id="msgBox" aria-labelledby="hMsg" hidden>
+    <div class="msghead"><h3 id="hMsg">Nachrichten an die Familien</h3><button type="button" class="linkbtn" id="msgClose">schliessen</button></div>
+    <div class="msgopts">
+      <div class="mopt"><span id="mSieLab">Anrede</span><div class="seg" id="mSie" role="group" aria-labelledby="mSieLab"><button type="button" data-v="sie" aria-pressed="true">Sie</button><button type="button" data-v="du" aria-pressed="false">Du</button></div></div>
+      <div class="mopt"><span id="mManyLab">Angeschrieben wird</span><div class="seg" id="mMany" role="group" aria-labelledby="mManyLab"><button type="button" data-v="1" aria-pressed="false">eine Person</button><button type="button" data-v="n" aria-pressed="true">mehrere Personen</button></div></div>
+    </div>
+    <div class="mfields">
+      <label class="fld"><span>Ort</span><input type="text" id="mPlace" maxlength="200" autocomplete="off" placeholder="z. B. Schulzimmer 12"></label>
+      <label class="fld"><span>Absender</span><input type="text" id="mSender" maxlength="120" autocomplete="name" placeholder="z. B. Anna Muster"></label>
+    </div>
+    <label class="fld"><span>Vorlage</span><textarea id="mText" rows="9"></textarea></label>
+    <p class="hint">Platzhalter: {Name}, {Datum}, {Zeit}, {Ort}, {Absender}. Sie werden für jede Familie ersetzt. <button type="button" class="linkbtn" id="mReset">Vorlage zurücksetzen</button></p>
+    <div class="amsg" id="mNote" hidden></div>
+    <div id="mOut">
+      <div class="mprev"><b id="mPrevHead">Vorschau</b><pre id="mPrev"></pre></div>
+      <div class="pbtns"><button type="button" class="btn primary" id="mTxt"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 20h14"/></svg><span>Alle herunterladen (Text)</span></button><button type="button" class="btn" id="mCsv"><span>Für Serienbrief (Excel)</span></button></div>
+      <ul class="mlist" id="mList"></ul>
+    </div>
+  </section>
   <details class="hardbox" id="hardBox">
     <summary>Gespräche einteilen: Schwierigkeitsgrad und gemeinsame Termine <span class="hcount" id="hardCount">optional</span></summary>
     <ul class="hhelp">
@@ -911,6 +949,7 @@ function setData(d, info){
   var old = state;
   var s = { title: d.title || '', source: info.source || '', loaded: Date.now(),
     cap: old ? old.cap : 1, useMaybe: old ? old.useMaybe : true, showFree: old ? old.showFree : false, mode: old && old.mode || 'kompakt', nextId: 1, slots: [], people: [], pins: {} };
+  if (old && old.msg) s.msg = old.msg;
   d.slots.forEach(function(x){ s.slots.push({ id: s.nextId++, day: x.day || '', time: x.time || '', on: true }); });
   d.people.forEach(function(x){ var p = { id: s.nextId++, name: x.name, from: x.name, orig: x.key || x.name, on: true, ans: x.ans.slice() }; if (x.resp) p.resp = x.resp; s.people.push(p); });
   normalizeDays(s.slots);
@@ -1333,6 +1372,7 @@ function renderAll(){
   $('#useMaybe').checked = !!state.useMaybe;
   $('#showFree').checked = !!state.showFree;
   renderSummary(last); renderMissing(last); renderPlan(last); renderMeta(); renderGrid(last);
+  renderMsgBtn();
 }
 function renderSummary(r){
   var got = r.nOn - r.missing.length;
@@ -1510,7 +1550,7 @@ function changed(focusSel, keepGrid){
   save();
   if (keepGrid && state){
     last = solve(state);
-    renderSummary(last); renderMissing(last); renderPlan(last); renderMeta();
+    renderSummary(last); renderMissing(last); renderPlan(last); renderMeta(); renderMsgBtn();
     [].forEach.call(document.querySelectorAll('#grid .c'), function(b){ b.classList.toggle('pick', last.slotOf[+b.dataset.p] === +b.dataset.s); });
   } else renderAll();
   if (focusSel){ var el = document.querySelector(focusSel); if (el) try { el.focus({ preventScroll: true }); } catch (e){ el.focus(); } }
@@ -1564,6 +1604,110 @@ function copyText(t){
 }
 function flash(btn, text){ var el = btn.querySelector('span') || btn, t = el.textContent; el.textContent = text; setTimeout(function(){ el.textContent = t; }, 1600); }
 
+/* ---------- Nachrichten an die Familien ----------
+   Sobald alle einen Termin haben: für jede Familie eine Nachricht mit Datum, Zeit und Ort, per Sie oder Du,
+   an eine oder mehrere Personen. Die Vorlage lässt sich anpassen; Platzhalter stehen in geschweiften Klammern. */
+var MSG_DEF = {
+  sie1: 'Guten Tag {Name}\n\nVielen Dank fürs Ausfüllen. Ich freue mich, Sie am {Datum} um {Zeit} begrüssen zu dürfen.\nOrt: {Ort}\n\nMit freundlichen Grüssen\n{Absender}',
+  sien: 'Liebe Familie {Name}\n\nVielen Dank fürs Ausfüllen. Ich freue mich, Sie am {Datum} um {Zeit} begrüssen zu dürfen.\nOrt: {Ort}\n\nMit freundlichen Grüssen\n{Absender}',
+  du1: 'Hallo {Name}\n\nVielen Dank fürs Ausfüllen. Ich freue mich, dich am {Datum} um {Zeit} begrüssen zu dürfen.\nOrt: {Ort}\n\nLiebe Grüsse\n{Absender}',
+  dun: 'Liebe Familie {Name}\n\nVielen Dank fürs Ausfüllen. Ich freue mich, euch am {Datum} um {Zeit} begrüssen zu dürfen.\nOrt: {Ort}\n\nLiebe Grüsse\n{Absender}'
+};
+var SENDER_KEY = 'smartslots-absender';
+function msgOpts(){ return state.msg || (state.msg = { du: false, many: true, place: '', sender: '', text: '' }); }
+function msgKey(m){ return (m.du ? 'du' : 'sie') + (m.many ? 'n' : '1'); }
+function msgTpl(m){ return m.text || MSG_DEF[msgKey(m)]; }
+function msgPlace(m){ return clean(m.place) || (poll.row && poll.row.location) || ''; }
+function msgReady(){ return !!(state && last && last.nOn > 0 && !last.missing.length); }
+function longDay(x){
+  var k = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dayKey(x));
+  return k && +k[1] ? fmt(new Date(+k[1], +k[2] - 1, +k[3], 12), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : x.day || '';
+}
+function msgItems(){
+  var s = state, r = last, rank = {}, out = [];
+  slotOrder(s).forEach(function(j, k){ rank[j] = k; });
+  s.people.forEach(function(p, i){ var j = r.slotOf[i]; if (p.on && j >= 0) out.push({ i: i, name: p.name, j: j, date: longDay(s.slots[j]), time: timeFrom(s.slots[j].time) + (/^\d\d:\d\d$/.test(timeFrom(s.slots[j].time)) ? ' Uhr' : '') }); });
+  return out.sort(function(a, b){ return rank[a.j] - rank[b.j] || a.i - b.i; });
+}
+function msgText(it, m){
+  var place = msgPlace(m), sender = clean(m.sender), vals = { name: it.name, datum: it.date, zeit: it.time, ort: place, absender: sender };
+  /* Zeilen mit leerem Ort oder Absender weglassen */
+  var lines = msgTpl(m).split('\n').filter(function(l){ return !(/\{ort\}/i.test(l) && !place) && !(/\{absender\}/i.test(l) && !sender); });
+  return lines.join('\n').replace(/\{(name|datum|zeit|ort|absender)\}/gi, function(x, k){ return vals[k.toLowerCase()]; }).replace(/\n{3,}/g, '\n\n').trim();
+}
+function renderMsgBtn(){
+  var b = $('#msgBtn'), ok = msgReady();
+  b.disabled = !ok;
+  b.title = ok ? 'Nachricht an jede Familie mit ihrem Termin' : 'Verfügbar, sobald alle einen Termin haben';
+  if (!ok && !$('#msgBox').hidden) $('#msgBox').hidden = true;
+  else if (!$('#msgBox').hidden) renderMsgs();
+}
+function msgFill(){
+  var m = msgOpts();
+  if (!m.sender) try { m.sender = localStorage.getItem(SENDER_KEY) || ''; } catch (e){}
+  [].forEach.call(document.querySelectorAll('#mSie button'), function(b){ b.setAttribute('aria-pressed', String((b.dataset.v === 'du') === !!m.du)); });
+  [].forEach.call(document.querySelectorAll('#mMany button'), function(b){ b.setAttribute('aria-pressed', String((b.dataset.v === 'n') === !!m.many)); });
+  $('#mPlace').value = msgPlace(m);
+  $('#mSender').value = m.sender || '';
+  $('#mText').value = msgTpl(m);
+}
+function renderMsgs(){
+  var m = msgOpts(), items = msgItems();
+  $('#mPrevHead').textContent = items.length ? 'Vorschau für ' + items[0].name + ' (' + plural(items.length, 'Nachricht', 'Nachrichten') + ' insgesamt)' : 'Vorschau';
+  $('#mPrev').textContent = items.length ? msgText(items[0], m) : '';
+  var miss = [];
+  if (!msgPlace(m)) miss.push('den Ort');
+  if (!clean(m.sender)) miss.push('deinen Namen als Absender');
+  note($('#mNote'), miss.length ? txt('', 'Tipp: Gib noch ' + miss.join(' und ') + ' ein, sonst ' + (miss.length > 1 ? 'fehlen diese Zeilen' : 'fehlt diese Zeile') + ' in den Nachrichten.') : null);
+  $('#mList').innerHTML = items.map(function(it, k){
+    return '<li><span class="mn">' + esc(it.name) + '</span><span class="mt">' + esc(it.date + ', ' + it.time) + '</span><button type="button" class="btn small" data-k="' + k + '"><span>Kopieren</span></button></li>';
+  }).join('');
+}
+function downloadText(name, text, type){
+  var url = URL.createObjectURL(new Blob([text], { type: type })), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+function fileBase(){ return acct.slot ? acct.slot.name.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'SmartSlots' : 'SmartSlots'; }
+$('#msgBtn').addEventListener('click', function(){
+  if (!msgReady()) return;
+  var box = $('#msgBox');
+  box.hidden = !box.hidden;
+  if (!box.hidden){ msgFill(); renderMsgs(); box.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+});
+$('#msgClose').addEventListener('click', function(){ $('#msgBox').hidden = true; });
+function msgSwitch(e, field){
+  var b = e.target.closest('button[data-v]');
+  if (!b) return;
+  var m = msgOpts(), val = field === 'du' ? b.dataset.v === 'du' : b.dataset.v === 'n';
+  if (!!m[field] === val) return;
+  if (m.text && !confirm('Deine angepasste Vorlage durch die passende Vorlage ersetzen?')){ m[field] = val; msgFill(); save(); renderMsgs(); return; }
+  m[field] = val; m.text = '';
+  msgFill(); save(); renderMsgs();
+}
+$('#mSie').addEventListener('click', function(e){ msgSwitch(e, 'du'); });
+$('#mMany').addEventListener('click', function(e){ msgSwitch(e, 'many'); });
+$('#mPlace').addEventListener('input', function(){ msgOpts().place = this.value; save(); renderMsgs(); });
+$('#mSender').addEventListener('input', function(){ msgOpts().sender = this.value; try { localStorage.setItem(SENDER_KEY, this.value); } catch (e){} save(); renderMsgs(); });
+$('#mText').addEventListener('input', function(){ var m = msgOpts(); m.text = this.value === MSG_DEF[msgKey(m)] ? '' : this.value; save(); renderMsgs(); });
+$('#mReset').addEventListener('click', function(){ var m = msgOpts(); m.text = ''; $('#mText').value = msgTpl(m); save(); renderMsgs(); });
+$('#mList').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-k]');
+  if (!b) return;
+  var it = msgItems()[+b.dataset.k];
+  if (it) copyText(msgText(it, msgOpts())).then(function(){ flash(b, '✓ Kopiert'); }, function(){ flash(b, 'Ging nicht'); });
+});
+$('#mTxt').addEventListener('click', function(){
+  var m = msgOpts(), items = msgItems();
+  var text = items.map(function(it){ return 'An: ' + it.name + ' (' + it.date + ', ' + it.time + ')\n\n' + msgText(it, m); }).join('\n\n' + new Array(41).join('-') + '\n\n');
+  downloadText(fileBase() + ' – Nachrichten.txt', '\ufeff' + text.replace(/\n/g, '\r\n') + '\r\n', 'text/plain;charset=utf-8');
+});
+$('#mCsv').addEventListener('click', function(){
+  var m = msgOpts(), rows = [['Name', 'Datum', 'Zeit', 'Ort', 'Nachricht']];
+  msgItems().forEach(function(it){ rows.push([it.name, it.date, it.time, msgPlace(m), msgText(it, m)]); });
+  downloadText(fileBase() + ' – Nachrichten.csv', '\ufeff' + rows.map(function(r){ return r.map(csvCell).join(';'); }).join('\r\n') + '\r\n', 'text/csv;charset=utf-8');
+});
+
 /* ---------- Beispiel ---------- */
 function demoData(){
   var days = [['Montag, 26. Oktober 2026', ['16:00', '16:20', '16:40', '17:00', '17:20', '17:40', '18:00', '18:20']],
@@ -1590,7 +1734,7 @@ function demoData(){
    Die Datenbank zählt «version» bei jeder Änderung hoch. Hat inzwischen ein anderes Fenster gespeichert, wird nichts
    überschrieben, sondern nachgefragt. */
 var acct = { on: false, client: null, user: null, guest: false, carry: null, recovery: false, view: '', mode: 'in',
-  slot: null, dirty: false, saving: null, timer: 0, retry: 0, problem: '', errText: '', list: null, notice: null, nav: 0, busy: false, mail: '', out: false, toast: '', manual: false, polls: {}, draft0: null };
+  slot: null, dirty: false, saving: null, timer: 0, retry: 0, problem: '', errText: '', list: null, notice: null, nav: 0, busy: false, mail: '', out: false, toast: '', manual: false, polls: {}, draft0: null, noLoc: false };
 var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 var SAVE_DELAY = 700;
 var ICON_SLOT = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h3"/></svg>';
@@ -2020,6 +2164,10 @@ function flush(){
 function dbText(e){
   var m = e && (e.message || e.details) || String(e), c = e && e.code;
   if (/failed to fetch|networkerror|load failed|network request failed/i.test(m)) return 'Keine Verbindung zum Server.';
+  if (c === 'PGRST204' || c === '42703' || /column/i.test(m) && /does not exist|could not find/i.test(m)){
+    var col = /'(\w+)' column|column\s+["']?(?:\w+\.)?(\w+)/i.exec(m);
+    return 'In Supabase fehlt die Spalte «' + (col ? col[1] || col[2] : '?') + '»: Bitte das SQL aus supabase/smartslot.sql nochmals ganz ausführen.';
+  }
   if (c === 'PGRST205' || c === 'PGRST202' || c === '42P01' || c === '42883' || /could not find the (table|function)|does not exist/i.test(m)){
     /* genau sagen, was fehlt: «Could not find the table 'public.polls' …», «relation "public.polls" does not exist» */
     var w = /(table|function|relation)\s+["']?(?:public\.)?([a-z_]+)/i.exec(m), what = w ? (/function/i.test(w[1]) ? 'die Funktion «' : 'die Tabelle «') + w[2] + '»' : 'noch etwas';
@@ -2139,7 +2287,9 @@ function initAccount(){
    Gruppen, Schwierigkeitsgrad, Stecknadeln, weggelassene Tage und von Hand geänderte Antworten bleiben. */
 var poll = { row: null, resp: [], src: '', timer: 0, busy: false, applying: false, at: 0, err: '', news: [], ed: null, editing: false, loading: false };
 var POLL_EVERY = 20000;
-var POLL_COLS = 'id,token,title,intro,slots,allow_maybe,open,updated_at';
+/* Spalte «location» gibt es erst mit dem neuen SQL; bis dahin geht alles andere weiter */
+function pcols(){ return 'id,token,title,intro,' + (acct.noLoc ? '' : 'location,') + 'slots,allow_maybe,open,updated_at'; }
+function locMissing(e){ return !!e && /location/.test(e.message || '') && /does not exist|could not find/i.test(e.message || ''); }
 var RESP_COLS = 'id,name,answers,comment,created_at,updated_at';
 function pdb(t){ return acct.client.from(t); }
 function pollUrl(){ return new URL('umfrage.html?t=' + encodeURIComponent(poll.row.token), location.href).href; }
@@ -2187,7 +2337,7 @@ function edStart(){
     len = Math.min(180, Math.max(5, Math.round((hm(lastS.to) - hm(lastS.from)) / 5) * 5));
     if (prev && prev.date === lastS.date){ var g = hm(lastS.from) - hm(prev.to); if (g >= 0 && g <= 30 && g % 5 === 0) pause = g; }
   }
-  edLoad({ title: P ? P.title : acct.slot ? acct.slot.name : '', intro: P ? P.intro : '', maybe: P ? P.allow_maybe : true, days: days, pause: pause,
+  edLoad({ title: P ? P.title : acct.slot ? acct.slot.name : '', place: P ? P.location || '' : '', intro: P ? P.intro : '', maybe: P ? P.allow_maybe : true, days: days, pause: pause,
     entry: { date: lastS ? lastS.date : '', from: lastS ? hhmm(hm(lastS.to) + pause) : '16:00', len: len } });
 }
 /* Formular füllen, aus der Umfrage oder aus einem gespeicherten Entwurf */
@@ -2195,6 +2345,7 @@ function edLoad(o){
   var P = poll.row, e = o.entry || {};
   poll.ed = { days: cleanDays(o.days), pause: [0, 5, 10, 15, 20, 30].indexOf(+o.pause) >= 0 ? +o.pause : 0, move: null, touched: !!o.touched };
   $('#pTitle').value = String(o.title || '').slice(0, 200);
+  $('#pPlace').value = String(o.place || '').slice(0, 200);
   $('#pIntro').value = String(o.intro || '').slice(0, 2000);
   $('#pMaybe').checked = o.maybe !== false;
   $('#pSave').textContent = P ? 'Änderungen speichern' : 'Umfrage erstellen';
@@ -2216,7 +2367,7 @@ function cleanDays(days){
 }
 /* Entwurf: wird mit dem SmartSlot gespeichert, solange die Umfrage noch nicht erstellt oder gespeichert ist */
 function edCollect(){
-  return { pollId: poll.row ? poll.row.id : null, title: $('#pTitle').value, intro: $('#pIntro').value, maybe: $('#pMaybe').checked,
+  return { pollId: poll.row ? poll.row.id : null, title: $('#pTitle').value, place: $('#pPlace').value, intro: $('#pIntro').value, maybe: $('#pMaybe').checked,
     days: poll.ed.days, pause: poll.ed.pause, entry: { date: $('#pDate').value, from: fromGet(), len: +$('#pLen').value } };
 }
 function edDraft(){ return acct.slot && poll.ed && poll.ed.touched && (!poll.row || poll.editing) ? edCollect() : null; }
@@ -2374,6 +2525,9 @@ $('#pCancel').addEventListener('click', function(){ poll.editing = false; poll.e
 $('#pollForm').addEventListener('submit', async function(e){
   e.preventDefault();
   var sl = acct.slot, P = poll.row, slots = edSlots(), title = clean($('#pTitle').value).slice(0, 200) || sl.name;
+  var place = clean($('#pPlace').value).slice(0, 200);
+  if (!place){ note($('#pMsg'), txt('err', 'Bitte den Ort angeben, z. B. Schulzimmer 12. Er steht auch in der Umfrage und in den Nachrichten.')); $('#pPlace').focus(); return; }
+  if (acct.noLoc) return note($('#pMsg'), txt('err', 'Für den Ort braucht es eine Ergänzung in Supabase: Bitte das SQL aus supabase/smartslot.sql nochmals ganz ausführen und die Seite neu laden.'));
   if (!slots.length) return note($('#pMsg'), txt('err', 'Bitte zuerst Termine hinzufügen: Datum, Beginn und Dauer wählen, dann «+ Hinzufügen».'));
   if (!P && state && state.people.length && !confirm('In diesem SmartSlot sind schon Antworten aus einer Datei. Sie werden durch die Antworten der Umfrage ersetzt. Weiter?')) return;
   if (P){
@@ -2382,10 +2536,10 @@ $('#pollForm').addEventListener('submit', async function(e){
     poll.resp.forEach(function(r){ if (Object.keys(r.answers || {}).some(function(k){ return !keep[k] && r.answers[k] > 0; })) lost++; });
     if (lost && !confirm(lost === 1 ? 'Eine Familie hat bei einem entfernten Termin zugesagt. Trotzdem speichern?' : lost + ' Familien haben bei entfernten Terminen zugesagt. Trotzdem speichern?')) return;
   }
-  var body = { title: title, intro: $('#pIntro').value.slice(0, 2000), slots: slots, allow_maybe: $('#pMaybe').checked };
+  var body = { title: title, location: place, intro: $('#pIntro').value.slice(0, 2000), slots: slots, allow_maybe: $('#pMaybe').checked };
   var btn = $('#pSave'); btn.disabled = true;
-  var r = P ? await pdb('polls').update(body).eq('id', P.id).select(POLL_COLS)
-            : await pdb('polls').insert(Object.assign({ smartslot_id: sl.id }, body)).select(POLL_COLS);
+  var r = P ? await pdb('polls').update(body).eq('id', P.id).select(pcols())
+            : await pdb('polls').insert(Object.assign({ smartslot_id: sl.id }, body)).select(pcols());
   btn.disabled = false;
   if (acct.slot !== sl) return;
   if (r.error || !r.data || !r.data.length) return note($('#pMsg'), txt('err', 'Die Umfrage konnte nicht gespeichert werden. ' + (r.error ? dbText(r.error) : '')));
@@ -2403,6 +2557,7 @@ function renderPollView(){
   if (!P) return;
   var n = poll.resp.length, lastR = poll.resp.reduce(function(a, r){ return !a || r.updated_at > a.updated_at ? r : a; }, null);
   var bits = ['<span class="pdot" aria-hidden="true"></span><b>' + (P.open ? 'Offen' : 'Geschlossen') + '</b>', plural(n, 'Antwort', 'Antworten')];
+  if (P.location) bits.push('Ort: ' + esc(P.location));
   if (lastR) bits.push('zuletzt: ' + esc(lastR.name) + ', ' + esc(when(lastR.updated_at)));
   if (poll.news.length) bits.push('<span class="pnew">' + (poll.news.length === 1 ? 'neu: ' + esc(poll.news[0]) : poll.news.length + ' neue Antworten') + '</span>');
   if (poll.err) bits.push('<span class="perr">Aktualisieren ging nicht: ' + esc(poll.err) + '</span>');
@@ -2412,7 +2567,7 @@ function renderPollView(){
   var url = pollUrl();
   $('#pvLink').value = url;
   $('#pvOpen').href = url;
-  $('#pvMail').href = 'mailto:?subject=' + encodeURIComponent(P.title) + '&body=' + encodeURIComponent((P.intro ? P.intro + '\n\n' : '') + 'Bitte tragen Sie hier ein, welche Termine für Sie passen:\n' + url);
+  $('#pvMail').href = 'mailto:?subject=' + encodeURIComponent(P.title) + '&body=' + encodeURIComponent((P.intro ? P.intro + '\n\n' : '') + (P.location ? 'Ort: ' + P.location + '\n\n' : '') + 'Bitte tragen Sie hier ein, welche Termine für Sie passen:\n' + url);
   $('#pvToggle').textContent = P.open ? 'Umfrage schliessen' : 'Umfrage wieder öffnen';
   var cm = poll.resp.filter(function(r){ return clean(r.comment); });
   $('#pvComments').hidden = !cm.length;
@@ -2427,7 +2582,7 @@ $('#pvToggle').addEventListener('click', async function(){
   var P = poll.row, b = this;
   if (P.open && !confirm('Umfrage schliessen? Danach können die Eltern nicht mehr antworten. Du kannst sie später wieder öffnen.')) return;
   b.disabled = true;
-  var r = await pdb('polls').update({ open: !P.open }).eq('id', P.id).select(POLL_COLS);
+  var r = await pdb('polls').update({ open: !P.open }).eq('id', P.id).select(pcols());
   b.disabled = false;
   if (r.error || !r.data || !r.data.length){ poll.err = r.error ? dbText(r.error) : 'nicht gefunden'; return renderPollView(); }
   poll.row = r.data[0]; poll.err = '';
@@ -2475,7 +2630,8 @@ function pollTick(){
 }
 async function pollLoad(sl){
   poll.loading = true; renderSource();
-  var r = await pdb('polls').select(POLL_COLS).eq('smartslot_id', sl.id);
+  var r = await pdb('polls').select(pcols()).eq('smartslot_id', sl.id);
+  if (r.error && locMissing(r.error) && !acct.noLoc){ acct.noLoc = true; r = await pdb('polls').select(pcols()).eq('smartslot_id', sl.id); }
   if (acct.slot !== sl) return;
   poll.loading = false;
   if (r.error){ poll.err = dbText(r.error); renderSource(); return; }

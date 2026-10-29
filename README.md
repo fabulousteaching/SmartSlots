@@ -7,6 +7,7 @@
 - wer keinen Termin bekommen kann, steht mit Grund in einer Liste
 - Familien lassen sich zu einem gemeinsamen Termin zusammenfassen
 - anspruchsvolle Gespräche folgen nach Möglichkeit nicht direkt aufeinander
+- sind alle eingeteilt, gibt es für jede Familie eine fertige Nachricht mit Datum, Zeit und Ort (per Sie oder Du), zum Herunterladen oder Kopieren
 
 Bei einer eigenen Umfrage erscheint jede neue Antwort automatisch, und die Verteilung passt sich an.
 

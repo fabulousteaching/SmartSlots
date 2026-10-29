@@ -83,6 +83,9 @@ create table if not exists public.poll_responses (
 );
 create index if not exists poll_responses_poll on public.poll_responses (poll_id, created_at);
 
+-- Ort der Gespräche (kam später dazu)
+alter table public.polls add column if not exists location text not null default '' check (char_length(location) <= 200);
+
 alter table public.polls enable row level security;
 alter table public.poll_responses enable row level security;
 revoke all on public.polls from anon, authenticated;
@@ -149,7 +152,7 @@ create trigger polls_touch before update on public.polls
 -- Für die Eltern: Umfrage lesen (nur mit dem Link)
 create or replace function public.poll_get(p_token text) returns jsonb
 language sql stable security definer set search_path = '' as $$
-  select jsonb_build_object('title', p.title, 'intro', p.intro, 'slots', p.slots, 'allow_maybe', p.allow_maybe, 'open', p.open)
+  select jsonb_build_object('title', p.title, 'intro', p.intro, 'location', p.location, 'slots', p.slots, 'allow_maybe', p.allow_maybe, 'open', p.open)
   from public.polls p where p.token = p_token;
 $$;
 

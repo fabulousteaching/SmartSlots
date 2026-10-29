@@ -62,6 +62,8 @@ button,input,textarea{font:inherit;color:inherit}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:24px;margin:18px 0}
 h1{margin:0;font-size:1.4rem;line-height:1.25;letter-spacing:-.01em;font-weight:700}
 .intro{margin:.6em 0 0;color:var(--ink-2);white-space:pre-line;overflow-wrap:anywhere}
+.place{display:flex;align-items:flex-start;gap:8px;margin:.7em 0 0;color:var(--ink);overflow-wrap:anywhere}
+.place svg{flex:none;width:18px;height:18px;margin-top:2px;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .fld{display:flex;flex-direction:column;gap:6px;margin:20px 0 0;font-size:.92rem;font-weight:600;color:var(--ink-2)}
 .fld i{font-style:normal;font-weight:400;color:var(--ink-3)}
 input[type=text],textarea{width:100%;min-height:46px;padding:.55em .8em;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);font-size:1rem;font-weight:400;color:var(--ink)}
@@ -127,6 +129,7 @@ input[type=text]:focus,textarea:focus{outline:none;border-color:var(--accent);bo
 
 <form class="card" id="form" hidden novalidate>
   <h1 id="title"></h1>
+  <p class="place" id="place" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span><b>Ort:</b> <span id="placeTxt"></span></span></p>
   <p class="intro" id="intro" hidden></p>
   <div class="msg" id="again" hidden>Sie haben schon geantwortet. Hier können Sie Ihre Antwort ändern.</div>
   <label class="fld"><span>Nachname</span><input type="text" id="name" maxlength="120" autocomplete="family-name" placeholder="z. B. Meier"></label>
@@ -194,6 +197,8 @@ function groups(){
 }
 function render(){
   $('#title').textContent = poll.title || 'Terminumfrage';
+  $('#placeTxt').textContent = poll.location || '';
+  $('#place').hidden = !poll.location;
   $('#intro').textContent = poll.intro || '';
   $('#intro').hidden = !poll.intro;
   $('#how').textContent = poll.allow_maybe ? 'Bitte geben Sie bei jedem Termin an, ob er für Sie passt. «Wenn nötig» heisst: Termin ist machbar, aber nicht erste Wahl.' : 'Bitte geben Sie bei jedem Termin an, ob er für Sie passt.';
